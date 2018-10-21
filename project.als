@@ -1,7 +1,6 @@
 // 1. structure of the social network, includes users and friendships
 sig User {
-	friends: User,
-	has : one Wall
+	friends: User
 }
 abstract sig Content {
 	ownedBy: one User,
@@ -28,8 +27,6 @@ sig Tag {
 sig Wall {
 	// belongs to a user
 	// have many notes and photos
-	published : Content,
-	privacySetting: one PrivacyLevel
 }
 
 sig Nicebook {
@@ -37,11 +34,23 @@ sig Nicebook {
 	walls: User->Wall,
 	comments: Content -> Comment, // attached comments
 	tags: Content -> Tag // must be with an constraint: no Comment -> Tag exists
+	published: Wall -> Content,
+       wallPrivacy: Wall -> Privacy
 }
 
 abstract sig PrivacyLevel{}
 
 one sig OnlyMe, Friends, FriendsOfFriends, Everyone extends PrivacyLevel{}
+
+// publish a piece of content on a user’s wall. The content may be the existing one. 
+pred publish [u : User, c : Content, n,n' : Nicebook] {
+	n'.walls = n.walls
+}
+
+// hide a piece of content on a user’s wall
+pred unpublish [] {
+	// only the owner can hide the content on his/her wall
+}
 
 // Upload a piece of content, excluding the attacked comments
 pred upload [b, b': Nicebook, u: User, c: Content] {
@@ -100,16 +109,6 @@ one OnlyMe, Friends, FriendsOfFriends, Everyone extends PrivacyLevel {}
 // upload a piece of content, photo, comment, or note
 pred upload [] {
 // only the owner or owner’s friends can post notes or photos
-}
-
-// publish a piece of content on a user’s wall. The content may be the existing one. 
-pred publish [] {
-	// only the owner can publish the content on his/her wall
-}
-
-// hide a piece of content on a user’s wall
-pred unpublish [] {
-	// only the owner can hide the content on his/her wall
 }
 
 // add a comment to an existing photo, note, or another comment
