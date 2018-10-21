@@ -22,16 +22,15 @@ sig Nicebook {
 	friends: User->User,
 	own: User -> Content,
 
-	wallContent: Wall-> Content, // only the published content is in this relation
 	comments: Content -> Comment, // attached comments
 	tags: Content -> Tag, // must be with an constraint: no Comment -> Tag exists
-	view: User -> Content // viewable content to an user
+	view: User -> Content, // viewable content to an user
 	// reference to only one user
 	// can only be added to photo or note
 	references: Tag -> User,
 
 	published: Wall -> Content,
-    wallPrivacy: Wall -> Privacy,
+	wallPrivacy: Wall -> PrivacyLevel
 }
 
 abstract sig PrivacyLevel{}
