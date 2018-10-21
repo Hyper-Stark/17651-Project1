@@ -39,7 +39,7 @@ abstract sig PrivacyLevel{}
 
 one sig OnlyMe, Friends, FriendsOfFriends, Everyone extends PrivacyLevel{}
 
-// Upload a piece of content
+// Upload a piece of content, excluding the attacked comments
 pred upload [u: User, c: Content] {
 	// precondition
 	// the content doesn't exist
@@ -47,6 +47,7 @@ pred upload [u: User, c: Content] {
 	// postcondition
 	// the content belongs to the user
 	// the privacy level is Everyone
+	// the content is shown on the user's wall
 }
 
 // Remove an existing piece of content from a user’s account.
@@ -57,7 +58,7 @@ pred remove [u: User, c: Content] {
 	// postcondition
 	// remove the attached comments
 	// remove the tags
-	// remove the content form the user
+	// remove the content form the user and the wall
 }
 
 // Add a comment to a content.
