@@ -39,12 +39,13 @@ one sig OnlyMe, Friends, FriendsOfFriends, Everyone extends PrivacyLevel{}
 
 // publish a piece of content on a user’s wall. The content may be the existing one. 
 pred publish [u : User, c : Content, n,n' : Nicebook] {
-	n'.walls = n.walls
+	n'.published = n.published + ( u -> c)
 }
 
 // hide a piece of content on a user’s wall
-pred unpublish [] {
+pred unpublish [u : User, c : Content, n,n' : Nicebook] {
 	// only the owner can hide the content on his/her wall
+	n'.published = n.published - (u->c)
 }
 
 // Upload a piece of content, excluding the attacked comments
