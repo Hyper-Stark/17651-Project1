@@ -21,7 +21,7 @@ sig Comment extends Content {
 sig Nicebook {
 	friends: User->User,
 	own: User -> Content,
-
+	walls: User -> Wall,
 	comments: Content -> Comment, // attached comments
 	tags: Content -> Tag, // must be with an constraint: no Comment -> Tag exists
 	view: User -> Content, // viewable content to an user
