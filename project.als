@@ -19,18 +19,18 @@ sig Comment extends Content {
 }
 
 sig Nicebook {
-	friends: User -> User,
-	own: User -> Content,
-	walls: User -> one Wall,
-	comments: Content -> Comment, // attached comments
-	tags: Content -> Tag, // must be with an constraint: no Comment -> Tag exists
-	view: User -> Content, // viewable content to an user
-	// reference to only one user
-	// can only be added to photo or note
-	references: Tag -> User,
+	friends: User -> User,			// friends of a user
+	walls: User -> one Wall, 			// user's wall
+	own: User -> Content,			// content uploaded by the user
+	view: User -> Content, 			// viewable content to an user
 
-	published: Wall -> Content,
-	wallPrivacy: Wall -> PrivacyLevel
+	published: Wall -> Content,		// published content on the wall
+	wallPrivacy: Wall -> PrivacyLevel,	// wall's privacy level
+
+	comments: Content -> Comment, 	// content's attached comments
+	tags: Content -> Tag,			// tags in the content
+
+	references: Tag -> one User,		// tag reference to an user
 }
 
 abstract sig PrivacyLevel{}
@@ -170,6 +170,7 @@ pred userInvariant [u: User, b: Nicebook] {
 
 pred invariants [b: Nicebook] {
 	all u: User | userInvariant[u, b]
+	// tags don't belong to comments
 }
 
 run {
