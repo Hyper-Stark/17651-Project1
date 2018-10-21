@@ -37,6 +37,18 @@ abstract sig PrivacyLevel{}
 
 one sig OnlyMe, Friends, FriendsOfFriends, Everyone extends PrivacyLevel{}
 
+pred nothingChanged[n, n' : Nicebook]{
+	n'.friends = n.friends
+	n'.own = n.own
+	n'.walls = n.walls
+	n'.comments = n.comments
+	n'.tags = n.tags
+	n'.view = n.view
+	n'.reference = n.reference
+	n'.published = n.published
+	n'.wallPrivacy = n.wallPrivacy
+}
+
 // publish a piece of content on a user’s wall. The content may be the existing one. 
 pred publish [u : User, c : Content, n,n' : Nicebook] {
 	n'.walls = n.walls
