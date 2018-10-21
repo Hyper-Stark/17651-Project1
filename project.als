@@ -19,6 +19,9 @@ sig Comment extends Content {
 }
 
 sig Nicebook {
+
+	users: User					// registered users
+
 	friends: User -> User,			// friends of a user
 	walls: User -> one Wall, 			// user's wall
 	own: User -> Content,			// content uploaded by the user
@@ -44,7 +47,7 @@ pred nothingChanged[n, n' : Nicebook]{
 	n'.comments = n.comments
 	n'.tags = n.tags
 	n'.view = n.view
-	n'.reference = n.reference
+	n'.references = n.references
 	n'.published = n.published
 	n'.wallPrivacy = n.wallPrivacy
 }
