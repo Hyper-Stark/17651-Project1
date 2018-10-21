@@ -44,14 +44,29 @@ pred nothingChanged[n, n' : Nicebook]{
 	n'.comments = n.comments
 	n'.tags = n.tags
 	n'.view = n.view
-	n'.reference = n.reference
+	n'.references = n.references
 	n'.published = n.published
 	n'.wallPrivacy = n.wallPrivacy
 }
 
 // publish a piece of content on a user’s wall. The content may be the existing one. 
 pred publish [u : User, c : Content, n,n' : Nicebook] {
-	n'.published = n.published + ( u -> c)
+
+	n'.friends = n.friends
+	n'.own = n.own
+	n'.walls = n.walls
+	n'.comments = n.comments
+	n'.tags = n.tags
+	n'.view = n.view
+	n'.references = n.references
+//	n'.published = n.published
+	n'.wallPrivacy = n.wallPrivacy	
+
+	n'.published = n.published + 
+				(u.(n.walls) -> c) + 
+				(c.(n.tags).(n.references).(n.walls) -> c)
+
+	
 }
 
 // hide a piece of content on a user’s wall
