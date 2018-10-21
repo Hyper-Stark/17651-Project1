@@ -76,7 +76,7 @@ pred remove [b, b': Nicebook, u: User, c: Content] {
 	// remove the content form the user
 	c not in b'.own[u]
 	// remove the content form the wall
-	c not in b'.walls[u]
+	c not in b'.published[b'.walls[u]]
 }
 
 // Add a comment to a content.
@@ -93,6 +93,25 @@ pred addComment [b, b': Nicebook, u: User, comment: Comment, content: Content] {
 	// the comment is attached to the content
 	comment in b'.comments[content]
 }
+
+assert uploadPreserveInv {
+	all b, b': Nicebook, u: User, c: Content | 
+		invariants[b] and upload[b, b', u, c] implies invariants[b']
+}
+check uploadPreserveInv for 10
+
+assert removePreserveInv {
+	all b, b': Nicebook, u: User, c: Content | 
+		invariants[b] and remove[b, b', u, c] implies invariants[b']
+}
+check removePreserveInv for 10
+
+assert addCommentPreserveInv {
+	all b, b': Nicebook, u: User, c: Content , comment: Comment| 
+		invariants[b] and addComment[b, b', u, comment, c] implies invariants[b']
+}
+check addCommentPreserveInv for 10
+
 run{}for 3 but exactly 5 Content
 
 
@@ -137,7 +156,7 @@ pred userInvariant [u: User, b: Nicebook] {
 	all u1, u2 : User | u1 != u2 and u1 in b.friends[u1] implies u2 in b.friends[u1]
 }
 
-pred invariants [b, b': Nicebook] {
+pred invariants [b: Nicebook] {
 	all u: User | userInvariant[u, b]
 }
 
