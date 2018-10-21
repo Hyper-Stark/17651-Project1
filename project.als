@@ -9,7 +9,7 @@ abstract sig Content {
        CommentPrivacy: one PrivacyLevel
 }
 sig Note extends Content {
-	contains : some Photo
+	contains : some Photo,
 	associatedWith : some Tag
 }
 sig Photo extends Content {
@@ -33,8 +33,12 @@ sig Wall {
 }
 
 sig Nicebook {
-
+	contents: User -> Content,
+	walls: User->Wall,
+	comments: Content -> Comment, // attached comments
+	tags: Content -> Tag // must be with an constraint: no Comment -> Tag exists
 }
+
 abstract sig PrivacyLevel{}
 
 one sig OnlyMe, Friends, FriendsOfFriends, Everyone extends PrivacyLevel{}
@@ -140,7 +144,6 @@ pred invariants{
 	// if u1 is a friend of u2, then u2 is also a friend of u1
 	all u1,u2 : User | u1 != u2 and u1 in u2.friends implies u2 in u1.friends
 	// users and content are belongs to only one social network
-	
-	// user can only add comments to content the user owns or viewable to the user (`viewable`)
-        all c : Content | one (Content.ownedBy)
+
+        // all c : Content | one (Content.ownedBy) // specify in Content.ownedBy
 }
