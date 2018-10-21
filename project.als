@@ -20,12 +20,12 @@ sig Comment extends Content {
 
 sig Nicebook {
 	friends: User->User,
-	contents: User -> Content,
+	own: User -> Content,
 
 	wallContent: Wall-> Content, // only the published content is in this relation
 	comments: Content -> Comment, // attached comments
 	tags: Content -> Tag, // must be with an constraint: no Comment -> Tag exists
-	viewable: User -> Content // viewable content to an user
+	view: User -> Content // viewable content to an user
 	// reference to only one user
 	// can only be added to photo or note
 	references: Tag -> User,
