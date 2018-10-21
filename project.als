@@ -9,7 +9,7 @@ abstract sig Content {
        CommentPrivacy: one PrivacyLevel
 }
 sig Note extends Content {
-	contains : some Photo
+	contains : some Photo,
 	associatedWith : some Tag
 }
 sig Photo extends Content {
