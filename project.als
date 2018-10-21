@@ -36,7 +36,8 @@ sig Nicebook {
 	contents: User -> Content,
 	walls: User->Wall,
 	comments: Content -> Comment, // attached comments
-	tags: Content -> Tag // must be with an constraint: no Comment -> Tag exists
+	tags: Content -> Tag, // must be with an constraint: no Comment -> Tag exists
+	viewable: User -> Content
 }
 
 abstract sig PrivacyLevel{}
