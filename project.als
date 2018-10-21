@@ -112,14 +112,19 @@ pred upload [n, n': Nicebook, u: User, c: Content] {
 
 	// postcondition
 	// the content belongs to the user
-	c in n'.own[u]
-	// the privacy level is same as the wall's privacy TODO wait for Olivia
+	n'.own = n.own + (u -> c)
+	// the privacy level is same as the wall's privacy TODO wait for Olivia - setPrivacy[]
 	c.ViewPrivacy = n'.wallPrivacy[n'.walls[u]]
-	// the content is shown on the user's wall
-	c in n'.published[n'.walls[u]]
-	// TODO the owner should also be tagged in the uploaded content
-	//c in Note or c in Photo implies (u in b'.references[b'.tags[c]])
-	//REMOVE THIS:- nothingChanged[n, n']
+	// TODO the content is shown on the user's wall ... when wall privacy is published?
+	n'.published = n.published + (n.walls[u] -> c)
+	// add to view ... DISCUSS, viewable existed, should it exist?
+	// DISCUSS ... the user can only be tagged by friends, but user cannot be his own friend
+
+	n'.users = n.users
+	n'.friends = n.friends
+	n'.walls = n.walls
+	n'.wallPrivacy = n.wallPrivacy
+	n'.comments = n.comments
 }
 
 // Remove an existing piece of content from a user’s account.
@@ -129,14 +134,18 @@ pred remove [n, n': Nicebook, u: User, c: Content] {
 	c in n.own[u]
 
 	// postcondition
-	// remove the attached comments
-	n'.comments[c] = none
-	// remove the tags
-	n'.tags[c] = none
 	// remove the content form the user
-	c not in n'.own[u]
-	// remove the content form the wall
-	c not in n'.published[n'.walls[u]]
+	n'.own = n.own ++ (u -> (n.own[u] - c))
+	// add to view ... DISCUSS, viewable existed, should it exist?
+	// removed from wall TODO when it's published
+	n'.published[n.walls[u]] = n.published[n.walls[u]] - c
+	// remove the attached comments ... TODO
+	// DISCUSS ... the user can only be tagged by friends, but user cannot be his own friend
+
+	n'.users = n.users
+	n'.friends = n.friends
+	n'.walls = n.walls
+	n'.wallPrivacy = n.wallPrivacy
 }
 
 // Add a comment to a content.
@@ -149,16 +158,26 @@ pred addComment [n, n': Nicebook, u: User, comment: Comment, content: Content] {
 
 	// postcondition
 	// the comment must belong to the user
-	comment in n'.own[u]
+	n'.own[u] = n.own[u] + comment
+	// add to view ... DISCUSS, viewable existed, should it exist?
+	// add to published ... TODO if the contnet is published on some wall, the comment should also be published
 	// the comment is attached to the content
-	comment in n'.comments[content]
+	n'.comments[content] = n.comments[content] + comment
+
+	n'.users = n.users
+	n'.friends = n.friends
+	n'.walls = n.walls
+	n'.wallPrivacy = n.wallPrivacy
+	n'.comments = n.comments
+	n'.tags = n.tags
+	n'.references = n.references
 }
 
 assert uploadPreserveInv {
 	all n, n': Nicebook, u: User, c: Content | 
 		invariants[n] and upload[n, n', u, c] implies invariants[n']
 }
-check uploadPreserveInv for 10
+check uploadPreserveInv
 
 assert removePreserveInv {
 	all n, n': Nicebook, u: User, c: Content | 
