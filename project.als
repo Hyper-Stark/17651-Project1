@@ -19,8 +19,8 @@ sig Comment extends Content {
 }
 
 sig Nicebook {
-	
-    users: User,					// registered users
+
+	users: User,					// registered users
 
 	friends: User -> User,			// friends of a user
 	walls: User -> one Wall, 			// user's wall
@@ -125,8 +125,8 @@ pred upload [b, b': Nicebook, u: User, c: Content] {
 	// postcondition
 	// the content belongs to the user
 	c in b'.own[u]
-	// the privacy level is same as the wall's privacy
-	c.ViewPrivacy = b'.wallPrivacy[b'.walls[u]]
+	// the privacy level is Everyone
+	c.ViewPrivacy = Everyone
 	// the content is shown on the user's wall
 	c in b'.published[b'.walls[u]]
 }
@@ -183,7 +183,7 @@ check addCommentPreserveInv for 10
 
 pred userInvariant [u: User, b: Nicebook] {
 	// if u1 is a friend of u2, then u2 is also a friend of u1
-	all u1, u2 : User | u1 != u2 and u1 in b.friends[u1] implies u2 in b.friends[u1]
+	all u1, u2 : User | u1 != u2 and u2 in b.friends[u1] implies u2 in b.friends[u1]
 }
 
 pred tagInvariant [t: Tag, b: Nicebook] {
