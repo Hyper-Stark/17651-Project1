@@ -4,7 +4,6 @@ sig User {
 	has : one Wall
 }
 abstract sig Content {
-	ownedBy: one User,
 	ViewPrivacy: one PrivacyLevel,
        CommentPrivacy: one PrivacyLevel
 }
@@ -26,18 +25,15 @@ sig Tag {
 }
 
 sig Wall {
-	// belongs to a user
-	// have many notes and photos
-	published : Content,
 	privacySetting: one PrivacyLevel
 }
 
 sig Nicebook {
 	contents: User -> Content,
-	walls: User->Wall,
+	wallContent: Wall-> Content, // only the published content is in this relation
 	comments: Content -> Comment, // attached comments
 	tags: Content -> Tag, // must be with an constraint: no Comment -> Tag exists
-	viewable: User -> Content
+	viewable: User -> Content // viewable content to an user
 }
 
 abstract sig PrivacyLevel{}
