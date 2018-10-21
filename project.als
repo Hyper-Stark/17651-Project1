@@ -189,10 +189,73 @@ pred contentInvariant [c: Content, n: Nicebook] {
 	one u: User | c in n.own[u]
 }
 
+// add a tag to a note or photo
+pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, w, w' : Wall] {
+
+	//precondition: 
+	//user who tags another user must be that user's friend, i.e., u1 should be a friend of u2(tagged user)
+	//w is the wall of user u2
+	(u1 in n.friends[u2]) and (w in n.walls[u2])
+	// the content to be tagged must be published on some wall
+	some w1: Wall | w1 in (n.published).c
+	
+	//postcondition:
+	//content is added to the wall of user and tag is added to the content
+	n'.published = n.published + w->c
+	n'.tags = n.tags + c -> (n.references).u2
+	
+	//nothing else changes 
+	n'.friends = n.friends
+	n'.own = n.own
+	n'.walls = n.walls
+	n'.comments = n.comments
+	n'.view = n.view
+	n'.references = n.references
+	n'.wallPrivacy = n.wallPrivacy
+}
+
+// remove a tag on a note or photo
+pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, w, w' : Wall] {
+	// precondition:
+	// content c must be present in tagged user's wall and w is the wall of user u
+	c in w.(n.published) and (w in n.walls[u])
+
+	//postcondition:
+	//content is removed from the wall of user and tag is removed from the content
+	n'.published = n.published - w->c
+	n'.tags = n.tags - c -> (n.references).u
+
+	//nothing else changes 
+	n'.friends = n.friends
+	n'.own = n.own
+	n'.walls = n.walls
+	n'.comments = n.comments
+	n'.view = n.view
+	n'.references = n.references
+	n'.wallPrivacy = n.wallPrivacy
+}
+
+assert addTagPreservesInvariant {
+	all n, n' : Nicebook, u1,u2 : User, c : Content, w, w' : Wall |
+		invariants[n] and addTag[n, n', u1, u2, c, w, w'] implies
+			invariants[n']
+}
+
+assert removeTagPreservesInvariant {
+	all n, n' : Nicebook, u : User, c : Content, w, w' : Wall |
+		invariants[n] and removeTag[n, n', u, c, w, w'] implies
+			invariants[n']
+}
+
+//check addTagPreservesInvariant for 7
+//check removeTagPreservesInvariant for 7
+
 pred invariants [n: Nicebook] {
 	all u: User | userInvariant[u, n]
 	all c: Content | contentInvariant[c, n]
 	all t: Tag | tagInvariant[t, n]
+	all n' : Nicebook, u1, u2: User, c : Content, w, w' : Wall | addTag[n, n', u1, u2, c, w, w']
+	all n' : Nicebook, u : User, c : Content, w, w' : Wall | removeTag[n, n', u, c, w, w']
 }
 
 /* privacy setting
@@ -206,5 +269,5 @@ assert NoPrivacyViolation {
 */
 
 run {
-	all b: Nicebook | invariants[b]
+	all n: Nicebook | invariants[n]
 } for 3 but exactly 1 Nicebook, exactly 2 User, exactly 5 Content
