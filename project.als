@@ -19,18 +19,21 @@ sig Comment extends Content {
 }
 
 sig Nicebook {
-	friends: User->User,
-	own: User -> Content,
-	walls: User -> Wall,
-	comments: Content -> Comment, // attached comments
-	tags: Content -> Tag, // must be with an constraint: no Comment -> Tag exists
-	view: User -> Content, // viewable content to an user
-	// reference to only one user
-	// can only be added to photo or note
-	references: Tag -> User,
 
-	published: Wall -> Content,
-	wallPrivacy: Wall -> PrivacyLevel
+	users: User					// registered users
+
+	friends: User -> User,			// friends of a user
+	walls: User -> one Wall, 			// user's wall
+	own: User -> Content,			// content uploaded by the user
+	view: User -> Content, 			// viewable content to an user
+
+	published: Wall -> Content,		// published content on the wall
+	wallPrivacy: Wall -> PrivacyLevel,	// wall's privacy level
+
+	comments: Content -> Comment, 	// content's attached comments
+	tags: Content -> Tag,			// tags in the content
+
+	references: Tag -> one User,		// tag reference to an user
 }
 
 abstract sig PrivacyLevel{}
@@ -79,22 +82,22 @@ pred unpublish [u : User, c : Content, n,n' : Nicebook] {
 pred upload [b, b': Nicebook, u: User, c: Content] {
 	// precondition
 	// the content doesn't exist
-	c not in b.contents[u]
+	c not in b.own[u]
 
 	// postcondition
 	// the content belongs to the user
-	c in b'.contents[u]
+	c in b'.own[u]
 	// the privacy level is Everyone
 	c.ViewPrivacy = Everyone
 	// the content is shown on the user's wall
-	c in b'.walls[u].published
+	c in b'.published[b'.walls[u]]
 }
 
 // Remove an existing piece of content from a user’s account.
 pred remove [b, b': Nicebook, u: User, c: Content] {
 	// precondition
 	// the content must belong to the user
-	c in b.contents[u]
+	c in b.own[u]
 
 	// postcondition
 	// remove the attached comments
@@ -102,9 +105,9 @@ pred remove [b, b': Nicebook, u: User, c: Content] {
 	// remove the tags
 	b'.tags[c] = none
 	// remove the content form the user
-	c not in b'.contents[u]
+	c not in b'.own[u]
 	// remove the content form the wall
-	c not in b'.walls[u]
+	c not in b'.published[b'.walls[u]]
 }
 
 // Add a comment to a content.
@@ -117,53 +120,60 @@ pred addComment [b, b': Nicebook, u: User, comment: Comment, content: Content] {
 
 	// postcondition
 	// the comment must belong to the user
-	comment in b'.contents[u]
+	comment in b'.own[u]
 	// the comment is attached to the content
 	comment in b'.comments[content]
 }
-run{}for 3 but exactly 5 Content
 
+assert uploadPreserveInv {
+	all b, b': Nicebook, u: User, c: Content | 
+		invariants[b] and upload[b, b', u, c] implies invariants[b']
+}
+check uploadPreserveInv for 10
 
-/*abstract sig PrivacyLevel {}
-one OnlyMe, Friends, FriendsOfFriends, Everyone extends PrivacyLevel {}
+assert removePreserveInv {
+	all b, b': Nicebook, u: User, c: Content | 
+		invariants[b] and remove[b, b', u, c] implies invariants[b']
+}
+check removePreserveInv for 10
 
-// 2. operations for modifying user content
+assert addCommentPreserveInv {
+	all b, b': Nicebook, u: User, c: Content , comment: Comment| 
+		invariants[b] and addComment[b, b', u, comment, c] implies invariants[b']
+}
+check addCommentPreserveInv for 10
 
-// upload a piece of content, photo, comment, or note
-pred upload [] {
-// only the owner or owner’s friends can post notes or photos
+pred userInvariant [u: User, b: Nicebook] {
+	// if u1 is a friend of u2, then u2 is also a friend of u1
+	all u1, u2 : User | u1 != u2 and u1 in b.friends[u1] implies u2 in b.friends[u1]
 }
 
-// add a comment to an existing photo, note, or another comment
-pred addComment [] {
-	// only viewable content to a user can be added comment
+pred tagInvariant [t: Tag, b: Nicebook] {
+	// the tag cannot be attached to comment
+	no t: Tag | t in b.tags[Comment]
 }
 
-
-// add a tag to a note or photo
-pred addTag [] {
-	// the content should publish on the wall of the tagged user
+pred contentInvariant [c: Content, b: Nicebook] {
+	// the content belongs to only one user
+	one u: User | c in b.own[u]
 }
 
-// remove a tag on a note or photo
-pred removeTag[] {
+pred invariants [b: Nicebook] {
+	all u: User | userInvariant[u, b]
+	all c: Content | contentInvariant[c, b]
+	all t: Tag | tagInvariant[t, b]
 }
 
-
-// 3. Privacy setting that control access to those content
-
+/* privacy setting
 fun viewable [u: User] {
 	// return the content that can be viewed by the user
 }
 
 assert NoPrivacyViolation {
 	// violation occurs if a user is able to see content not in `viewable`
-}*/
+}
+*/
 
-pred invariants{
-	// if u1 is a friend of u2, then u2 is also a friend of u1
-	all u1,u2 : User | u1 != u2 and u1 in u2.friends implies u2 in u1.friends
-	// users and content are belongs to only one social network
-
-        // all c : Content | one (Content.ownedBy) // specify in Content.ownedBy
+run {
+	all b: Nicebook | invariants[b]
 }
