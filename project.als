@@ -33,8 +33,12 @@ sig Wall {
 }
 
 sig Nicebook {
-
+	contents: User -> Content,
+	walls: User->Wall,
+	comments: Content -> Comment, // attached comments
+	tags: Content -> Tag // must be with an constraint: no Comment -> Tag exists
 }
+
 abstract sig PrivacyLevel{}
 
 one sig OnlyMe, Friends, FriendsOfFriends, Everyone extends PrivacyLevel{}
