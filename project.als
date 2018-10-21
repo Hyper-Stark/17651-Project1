@@ -139,6 +139,14 @@ pred remove [n, n': Nicebook, u: User, c: Content] {
 	c not in n'.published[n'.walls[u]]
 }
 
+fun commentable [n : Nicebook, u : User] : set Content{
+	// return the contents that the user 
+	{ c : Content | (c.CommentPrivacy = OnlyMe and n.own.c = u) or
+			     (c.CommentPrivacy = Friends and u in n.friends[n.own.c] + n.own.c) or
+			     (c.CommentPrivacy = FriendsOfFriends and u in n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c) or
+			     (c.CommentPrivacy = Everyone) }	
+}
+
 // Add a comment to a content.
 pred addComment [n, n': Nicebook, u: User, comment: Comment, content: Content] {
 	// precondition
