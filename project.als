@@ -19,8 +19,8 @@ sig Comment extends Content {
 }
 
 sig Nicebook {
-
-	users: User,					// registered users
+	
+    users: User,					// registered users
 
 	friends: User -> User,			// friends of a user
 	walls: User -> one Wall, 			// user's wall
@@ -125,8 +125,8 @@ pred upload [b, b': Nicebook, u: User, c: Content] {
 	// postcondition
 	// the content belongs to the user
 	c in b'.own[u]
-	// the privacy level is Everyone
-	c.ViewPrivacy = Everyone
+	// the privacy level is same as the wall's privacy
+	c.ViewPrivacy = b'.wallPrivacy[b'.walls[u]]
 	// the content is shown on the user's wall
 	c in b'.published[b'.walls[u]]
 }
