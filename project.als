@@ -247,6 +247,76 @@ assert removeTagPreservesInvariant {
 			invariants[n']
 }
 
+// Privacy part
+pred ContentInvariant[] {
+	// The user who has a content published on his/her wall should be the one
+	// that is tagged by this content.
+	all n : Nicebook | all u : User | all c : n.published[n.walls[u]] | all t : n.tags[c] |
+		n.own.c in n.references[t]
+
+}
+
+pred setContentPrivacy[n : Nicebook, c : Content, p : PrivacyLevel, u : User] {
+	// precondition
+	c in n.published[n.walls[u]]
+	// postcondition
+	c.ViewPrivacy = p
+}
+
+pred setCommentPrivacy[n : Nicebook, c : Content, p : PrivacyLevel, u : User] {
+	// precondition
+	n.own.c = u
+	// postcondition
+	c.CommentPrivacy = p
+}
+
+fun commentable [n : Nicebook, u : User] : set Content{
+	// return the contents that the user 
+	{ c : Content | (c.CommentPrivacy = OnlyMe and n.own.c = u) or
+			     (c.CommentPrivacy = Friends and u in n.friends[n.own.c] + n.own.c) or
+			     (c.CommentPrivacy = FriendsOfFriends and u in n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c) or
+			     (c.CommentPrivacy = Everyone) }	
+}
+
+pred addComment[n, n' : Nicebook, m : Comment, c : Content, u : User] {
+	// precondition
+	c in commentable[n, u]
+	// postcondition
+	n'.friends = n.friends
+	n'.own = n.own
+	n'.walls = n.walls
+	n'.comments = n.comments + c -> m
+	n'.tags = n.tags
+	n'.view = n.view
+	n'.references = n.references
+	n'.published = n.published
+	n'.wallPrivacy = n.wallPrivacy
+
+	m.attachedTo = c
+}
+
+pred privacyInvariant[n : Nicebook, w : Wall, c : Content] {
+	//the content privacy level is no lower than the wall privacy level
+	n.wallPrivacy[w] = OnlyMe implies c.ViewPrivacy = OnlyMe and c.CommentPrivacy = OnlyMe
+	n.wallPrivacy[w] = Friends implies c.ViewPrivacy = Friends + OnlyMe and c.CommentPrivacy = Friends + OnlyMe
+	n.wallPrivacy[w] = FriendsOfFriends implies c.ViewPrivacy = FriendsOfFriends + Friends + OnlyMe and c.CommentPrivacy = FriendsOfFriends + Friends + OnlyMe
+	n.wallPrivacy[w] = Everyone implies c.ViewPrivacy = PrivacyLevel and c.CommentPrivacy = PrivacyLevel
+}
+
+fun viewable [n : Nicebook, u: User] : set Content{
+	// return the content that can be viewed by the user
+	{ c : Content | (c.ViewPrivacy = OnlyMe and n.own.c = u) or
+			     (c.ViewPrivacy = Friends and u in n.friends[n.own.c] + n.own.c) or
+			     (c.ViewPrivacy = FriendsOfFriends and u in n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c) or
+			     (c.ViewPrivacy = Everyone) }
+}
+
+assert NoPrivacyViolation {
+	// violation occurs if a user is able to see content not in `viewable`
+	all n : Nicebook | all u : User | n.view[u] in viewable[n, u]
+}
+//check NoPrivacyViolation
+
 //check addTagPreservesInvariant for 7
 //check removeTagPreservesInvariant for 7
 
