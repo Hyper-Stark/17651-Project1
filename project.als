@@ -132,10 +132,15 @@ assert NoPrivacyViolation {
 	// violation occurs if a user is able to see content not in `viewable`
 }*/
 
-pred invariants{
+pred userInvariant [u: User, b: Nicebook] {
 	// if u1 is a friend of u2, then u2 is also a friend of u1
-	all u1,u2 : User | u1 != u2 and u1 in u2.friends implies u2 in u1.friends
-	// users and content are belongs to only one social network
+	all u1, u2 : User | u1 != u2 and u1 in b.friends[u1] implies u2 in b.friends[u1]
+}
 
-        // all c : Content | one (Content.ownedBy) // specify in Content.ownedBy
+pred invariants [b, b': Nicebook] {
+	all u: User | userInvariant[u, b]
+}
+
+run {
+	all b: Nicebook | invariants[b]
 }
