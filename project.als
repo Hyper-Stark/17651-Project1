@@ -62,89 +62,94 @@ pred unpublish [] {
 }
 
 // Upload a piece of content, excluding the attacked comments
-pred upload [b, b': Nicebook, u: User, c: Content] {
+pred upload [n, n': Nicebook, u: User, c: Content] {
 	// precondition
 	// the content doesn't exist
-	c not in b.own[u]
+	c not in n.own[u]
 
 	// postcondition
 	// the content belongs to the user
-	c in b'.own[u]
-	// the privacy level is same as the wall's privacy
-	c.ViewPrivacy = b'.wallPrivacy[b'.walls[u]]
+	c in n'.own[u]
+	// the privacy level is same as the wall's privacy TODO wait for Olivia
+	c.ViewPrivacy = n'.wallPrivacy[n'.walls[u]]
 	// the content is shown on the user's wall
-	c in b'.published[b'.walls[u]]
+	c in n'.published[n'.walls[u]]
+	// TODO the owner should also be tagged in the uploaded content
+	//c in Note or c in Photo implies (u in b'.references[b'.tags[c]])
+	nothingChanged[n, n']
 }
 
 // Remove an existing piece of content from a user’s account.
-pred remove [b, b': Nicebook, u: User, c: Content] {
+pred remove [n, n': Nicebook, u: User, c: Content] {
 	// precondition
 	// the content must belong to the user
-	c in b.own[u]
+	c in n.own[u]
 
 	// postcondition
 	// remove the attached comments
-	b'.comments[c] = none
+	n'.comments[c] = none
 	// remove the tags
-	b'.tags[c] = none
+	n'.tags[c] = none
 	// remove the content form the user
-	c not in b'.own[u]
+	c not in n'.own[u]
 	// remove the content form the wall
-	c not in b'.published[b'.walls[u]]
+	c not in n'.published[n'.walls[u]]
 }
 
 // Add a comment to a content.
-pred addComment [b, b': Nicebook, u: User, comment: Comment, content: Content] {
+pred addComment [n, n': Nicebook, u: User, comment: Comment, content: Content] {
 	// precondition
 	// the comment doesn't exist
-	comment not in b.comments[content]
+	comment not in n.comments[content]
 	// authorized to add comment to the content
 	// TODO from Olivia
 
 	// postcondition
 	// the comment must belong to the user
-	comment in b'.own[u]
+	comment in n'.own[u]
 	// the comment is attached to the content
-	comment in b'.comments[content]
+	comment in n'.comments[content]
 }
 
 assert uploadPreserveInv {
-	all b, b': Nicebook, u: User, c: Content | 
-		invariants[b] and upload[b, b', u, c] implies invariants[b']
+	all n, n': Nicebook, u: User, c: Content | 
+		invariants[n] and upload[n, n', u, c] implies invariants[n']
 }
 check uploadPreserveInv for 10
 
 assert removePreserveInv {
-	all b, b': Nicebook, u: User, c: Content | 
-		invariants[b] and remove[b, b', u, c] implies invariants[b']
+	all n, n': Nicebook, u: User, c: Content | 
+		invariants[n] and remove[n, n', u, c] implies invariants[n']
 }
-check removePreserveInv for 10
+//check removePreserveInv for 10
 
 assert addCommentPreserveInv {
-	all b, b': Nicebook, u: User, c: Content , comment: Comment| 
-		invariants[b] and addComment[b, b', u, comment, c] implies invariants[b']
+	all n, n': Nicebook, u: User, c: Content , comment: Comment| 
+		invariants[n] and addComment[n, n', u, comment, c] implies invariants[n']
 }
-check addCommentPreserveInv for 10
+//check addCommentPreserveInv for 10
 
-pred userInvariant [u: User, b: Nicebook] {
+pred userInvariant [u: User, n: Nicebook] {
+	// a user cannot be his/her own friend
+	u not in n.friends[u]
 	// if u1 is a friend of u2, then u2 is also a friend of u1
-	all u1, u2 : User | u1 != u2 and u1 in b.friends[u1] implies u2 in b.friends[u1]
+	all u1, u2 : User | (u1 != u2 and u2 in n.friends[u1]) implies u1 in n.friends[u2]
 }
 
-pred tagInvariant [t: Tag, b: Nicebook] {
+pred tagInvariant [t: Tag, n: Nicebook] {
 	// the tag cannot be attached to comment
-	no t: Tag | t in b.tags[Comment]
+	no t: Tag | t in n.tags[Comment]
 }
 
-pred contentInvariant [c: Content, b: Nicebook] {
+pred contentInvariant [c: Content, n: Nicebook] {
 	// the content belongs to only one user
-	one u: User | c in b.own[u]
+	one u: User | c in n.own[u]
 }
 
-pred invariants [b: Nicebook] {
-	all u: User | userInvariant[u, b]
-	all c: Content | contentInvariant[c, b]
-	all t: Tag | tagInvariant[t, b]
+pred invariants [n: Nicebook] {
+	all u: User | userInvariant[u, n]
+	all c: Content | contentInvariant[c, n]
+	all t: Tag | tagInvariant[t, n]
 }
 
 /* privacy setting
@@ -159,4 +164,4 @@ assert NoPrivacyViolation {
 
 run {
 	all b: Nicebook | invariants[b]
-}
+} for 3 but exactly 1 Nicebook, exactly 2 User, exactly 5 Content
