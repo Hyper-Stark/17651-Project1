@@ -10,6 +10,7 @@ abstract sig Content {
 }
 sig Note extends Content {
 	contains : some Photo
+	associatedWith : some Tag
 }
 sig Photo extends Content {
 	associatedWith : some Tag
