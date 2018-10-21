@@ -168,9 +168,20 @@ pred userInvariant [u: User, b: Nicebook] {
 	all u1, u2 : User | u1 != u2 and u1 in b.friends[u1] implies u2 in b.friends[u1]
 }
 
+pred tagInvariant [t: Tag, b: Nicebook] {
+	// the tag cannot be attached to comment
+	no t: Tag | t in b.tags[Comment]
+}
+
+pred contentInvariant [c: Content, b: Nicebook] {
+	// the content belongs to only one user
+	one u: User | c in b.own[u]
+}
+
 pred invariants [b: Nicebook] {
 	all u: User | userInvariant[u, b]
-	// tags don't belong to comments
+	all c: Content | contentInvariant[c, b]
+	all t: Tag | tagInvariant[t, b]
 }
 
 run {
