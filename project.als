@@ -119,10 +119,8 @@ pred addTag [] {
 }
 
 // remove a tag on a note or photo
-pref removeTag[] {
+pred removeTag[] {
 }
-
-pred removeTag [] {}
 
 
 // 3. Privacy setting that control access to those content
