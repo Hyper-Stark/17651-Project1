@@ -40,36 +40,50 @@ abstract sig PrivacyLevel{}
 one sig OnlyMe, Friends, FriendsOfFriends, Everyone extends PrivacyLevel{}
 
 // Upload a piece of content, excluding the attacked comments
-pred upload [u: User, c: Content] {
+pred upload [b, b': Nicebook, u: User, c: Content] {
 	// precondition
 	// the content doesn't exist
+	c not in b.contents[u]
 
 	// postcondition
 	// the content belongs to the user
+	c in b'.contents[u]
 	// the privacy level is Everyone
+	c.ViewPrivacy = Everyone
 	// the content is shown on the user's wall
+	c in b'.walls[u].published
 }
 
 // Remove an existing piece of content from a user’s account.
-pred remove [u: User, c: Content] {
+pred remove [b, b': Nicebook, u: User, c: Content] {
 	// precondition
 	// the content must belong to the user
+	c in b.contents[u]
 
 	// postcondition
 	// remove the attached comments
+	b'.comments[c] = none
 	// remove the tags
-	// remove the content form the user and the wall
+	b'.tags[c] = none
+	// remove the content form the user
+	c not in b'.contents[u]
+	// remove the content form the wall
+	c not in b'.walls[u]
 }
 
 // Add a comment to a content.
-pred addComment [u: User, c: Comment, content: Content] {
+pred addComment [b, b': Nicebook, u: User, comment: Comment, content: Content] {
 	// precondition
 	// the comment doesn't exist
+	comment not in b.comments[content]
 	// authorized to add comment to the content
+	// TODO from Olivia
 
 	// postcondition
 	// the comment must belong to the user
+	comment in b'.contents[u]
 	// the comment is attached to the content
+	comment in b'.comments[content]
 }
 run{}for 3 but exactly 5 Content
 
