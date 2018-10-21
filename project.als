@@ -19,6 +19,7 @@ sig Comment extends Content {
 }
 
 sig Nicebook {
+
 	users: User,					// registered users
 
 	friends: User -> User,			// friends of a user
@@ -39,7 +40,10 @@ abstract sig PrivacyLevel{}
 
 one sig OnlyMe, Friends, FriendsOfFriends, Everyone extends PrivacyLevel{}
 
-pred nothingChanged[n, n' : Nicebook]{
+// publish a piece of content on a user’s wall. The content may be the existing one. 
+pred publish [u : User, c : Content, n,n' : Nicebook] {
+
+	n'.users = n.users
 	n'.friends = n.friends
 	n'.own = n.own
 	n'.walls = n.walls
@@ -47,18 +51,57 @@ pred nothingChanged[n, n' : Nicebook]{
 	n'.tags = n.tags
 	n'.view = n.view
 	n'.references = n.references
-	n'.published = n.published
-	n'.wallPrivacy = n.wallPrivacy
-}
+//	n'.published = n.published
+	n'.wallPrivacy = n.wallPrivacy	
 
-// publish a piece of content on a user’s wall. The content may be the existing one. 
-pred publish [u : User, c : Content, n,n' : Nicebook] {
-	n'.walls = n.walls
+	(
+		(u in n.users) 
+			and
+	      	(c not in n.users.(n.walls).(n.published))
+	)
+		implies
+	n'.published = n.published + 
+				(u.(n.walls) -> c) + 
+				(c.(n.tags).(n.references).(n.walls) -> c)
+
+	(
+		(u not in n.users)
+			or 
+		(c in n.users.(n.walls).(n.published))
+	)
+		implies
+	n'.published = n.published
+	
 }
 
 // hide a piece of content on a user’s wall
-pred unpublish [] {
-	// only the owner can hide the content on his/her wall
+pred unpublish [u : User, c : Content, n,n' : Nicebook] {
+
+	// only the owner can hide the content on his/her and related user's wall
+	n'.users = n.users
+	n'.friends = n.friends
+	n'.own = n.own
+	n'.walls = n.walls
+	n'.comments = n.comments
+	n'.tags = n.tags
+	n'.view = n.view
+	n'.references = n.references
+//	n'.published = n.published
+	n'.wallPrivacy = n.wallPrivacy
+
+	(
+		(u in n.users) and (c in u.(n.own))
+	)
+		implies
+	n'.published = n.published - 
+				(u.(n.walls) -> c) - 
+				(c.(n.tags).(n.references).(n.walls) -> c)
+
+	(		
+		(u not in n.users) or (c not in u.(n.own))
+	)
+		implies
+	n'.published = n.published
 }
 
 // Upload a piece of content, excluding the attacked comments
