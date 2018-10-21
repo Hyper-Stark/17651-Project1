@@ -63,22 +63,22 @@ pred unpublish [] {
 pred upload [b, b': Nicebook, u: User, c: Content] {
 	// precondition
 	// the content doesn't exist
-	c not in b.contents[u]
+	c not in b.own[u]
 
 	// postcondition
 	// the content belongs to the user
-	c in b'.contents[u]
+	c in b'.own[u]
 	// the privacy level is Everyone
 	c.ViewPrivacy = Everyone
 	// the content is shown on the user's wall
-	c in b'.walls[u].published
+	c in b'.published[b'.walls[u]]
 }
 
 // Remove an existing piece of content from a user’s account.
 pred remove [b, b': Nicebook, u: User, c: Content] {
 	// precondition
 	// the content must belong to the user
-	c in b.contents[u]
+	c in b.own[u]
 
 	// postcondition
 	// remove the attached comments
@@ -86,7 +86,7 @@ pred remove [b, b': Nicebook, u: User, c: Content] {
 	// remove the tags
 	b'.tags[c] = none
 	// remove the content form the user
-	c not in b'.contents[u]
+	c not in b'.own[u]
 	// remove the content form the wall
 	c not in b'.walls[u]
 }
@@ -101,7 +101,7 @@ pred addComment [b, b': Nicebook, u: User, comment: Comment, content: Content] {
 
 	// postcondition
 	// the comment must belong to the user
-	comment in b'.contents[u]
+	comment in b'.own[u]
 	// the comment is attached to the content
 	comment in b'.comments[content]
 }
