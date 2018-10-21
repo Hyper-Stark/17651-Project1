@@ -39,6 +39,37 @@ abstract sig PrivacyLevel{}
 
 one sig OnlyMe, Friends, FriendsOfFriends, Everyone extends PrivacyLevel{}
 
+// Upload a piece of content
+pred upload [u: User, c: Content] {
+	// precondition
+	// the content doesn't exist
+
+	// postcondition
+	// the content belongs to the user
+	// the privacy level is Everyone
+}
+
+// Remove an existing piece of content from a user’s account.
+pred remove [u: User, c: Content] {
+	// precondition
+	// the content must belong to the user
+
+	// postcondition
+	// remove the attached comments
+	// remove the tags
+	// remove the content form the user
+}
+
+// Add a comment to a content.
+pred addComment [u: User, c: Comment, content: Content] {
+	// precondition
+	// the comment doesn't exist
+	// authorized to add comment to the content
+
+	// postcondition
+	// the comment must belong to the user
+	// the comment is attached to the content
+}
 run{}for 3 but exactly 5 Content
 
 
@@ -50,12 +81,6 @@ one OnlyMe, Friends, FriendsOfFriends, Everyone extends PrivacyLevel {}
 // upload a piece of content, photo, comment, or note
 pred upload [] {
 // only the owner or owner’s friends can post notes or photos
-}
-
-// remove a piece of content
-pred remove [] {
-	// only the owner of the content can remove
-	// the comment cannot be deleted once uploaded
 }
 
 // publish a piece of content on a user’s wall. The content may be the existing one. 
@@ -103,6 +128,4 @@ pred invariants{
 	
 	// user can only add comments to content the user owns or viewable to the user (`viewable`)
         all c : Content | one (Content.ownedBy)
-	
-
 }
