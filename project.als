@@ -1,7 +1,8 @@
 // 1. structure of the social network, includes users and friendships
-sig User {
-	friends: User
-}
+sig User {}
+sig Tag {}
+sig Wall {}
+
 abstract sig Content {
 	ownedBy: one User,
 	ViewPrivacy: one PrivacyLevel,
@@ -18,24 +19,18 @@ sig Comment extends Content {
 	attachedTo: one Content
 }
 
-sig Tag {
-	// reference to only one user
-	// can only be added to photo or note
-	reference: one User
-}
-
-sig Wall {
-	// belongs to a user
-	// have many notes and photos
-}
-
 sig Nicebook {
+	friends: User->User,
 	contents: User -> Content,
 	walls: User->Wall,
 	comments: Content -> Comment, // attached comments
-	tags: Content -> Tag // must be with an constraint: no Comment -> Tag exists
+	tags: Content -> Tag, // must be with an constraint: no Comment -> Tag exists
+	// reference to only one user
+	// can only be added to photo or note
+	references: Tag -> User,
+
 	published: Wall -> Content,
-       wallPrivacy: Wall -> Privacy
+       wallPrivacy: Wall -> Privacy,
 }
 
 abstract sig PrivacyLevel{}
