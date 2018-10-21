@@ -20,7 +20,7 @@ sig Comment extends Content {
 
 sig Nicebook {
 
-	users: User					// registered users
+	users: User,					// registered users
 
 	friends: User -> User,			// friends of a user
 	walls: User -> one Wall, 			// user's wall
@@ -55,6 +55,7 @@ pred nothingChanged[n, n' : Nicebook]{
 // publish a piece of content on a user’s wall. The content may be the existing one. 
 pred publish [u : User, c : Content, n,n' : Nicebook] {
 
+	n'.users = n.users
 	n'.friends = n.friends
 	n'.own = n.own
 	n'.walls = n.walls
@@ -65,17 +66,54 @@ pred publish [u : User, c : Content, n,n' : Nicebook] {
 //	n'.published = n.published
 	n'.wallPrivacy = n.wallPrivacy	
 
+	(
+		(u in n.users) 
+			and
+	      	(c not in n.users.(n.walls).(n.published))
+	)
+		implies
 	n'.published = n.published + 
 				(u.(n.walls) -> c) + 
 				(c.(n.tags).(n.references).(n.walls) -> c)
 
+	(
+		(u not in n.users)
+			or 
+		(c in n.users.(n.walls).(n.published))
+	)
+		implies
+	n'.published = n.published
 	
 }
 
 // hide a piece of content on a user’s wall
 pred unpublish [u : User, c : Content, n,n' : Nicebook] {
-	// only the owner can hide the content on his/her wall
-	n'.published = n.published - (u->c)
+
+	// only the owner can hide the content on his/her and related user's wall
+	n'.users = n.users
+	n'.friends = n.friends
+	n'.own = n.own
+	n'.walls = n.walls
+	n'.comments = n.comments
+	n'.tags = n.tags
+	n'.view = n.view
+	n'.references = n.references
+//	n'.published = n.published
+	n'.wallPrivacy = n.wallPrivacy
+
+	(
+		(u in n.users) and (c in u.(n.own))
+	)
+		implies
+	n'.published = n.published - 
+				(u.(n.walls) -> c) - 
+				(c.(n.tags).(n.references).(n.walls) -> c)
+
+	(		
+		(u not in n.users) or (c not in u.(n.own))
+	)
+		implies
+	n'.published = n.published
 }
 
 // Upload a piece of content, excluding the attacked comments
