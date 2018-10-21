@@ -19,8 +19,7 @@ sig Comment extends Content {
 }
 
 sig Nicebook {
-
-	users: User					// registered users
+	users: User,					// registered users
 
 	friends: User -> User,			// friends of a user
 	walls: User -> one Wall, 			// user's wall
