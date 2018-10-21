@@ -101,8 +101,5 @@ pred invariants{
 	all u1,u2 : User | u1 != u2 and u1 in u2.friends implies u2 in u1.friends
 	// users and content are belongs to only one social network
 	
-	// user can only add comments to content the user owns or viewable to the user (`viewable`)
-        all c : Content | one (Content.ownedBy)
-	
-
+        // all c : Content | one (Content.ownedBy) // specify in Content.ownedBy
 }
