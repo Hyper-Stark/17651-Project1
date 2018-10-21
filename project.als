@@ -119,7 +119,7 @@ pred upload [n, n': Nicebook, u: User, c: Content] {
 	c in n'.published[n'.walls[u]]
 	// TODO the owner should also be tagged in the uploaded content
 	//c in Note or c in Photo implies (u in b'.references[b'.tags[c]])
-	nothingChanged[n, n']
+	//REMOVE THIS:- nothingChanged[n, n']
 }
 
 // Remove an existing piece of content from a user’s account.
@@ -237,13 +237,13 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, w, w' : Wall] {
 
 assert addTagPreservesInvariant {
 	all n, n' : Nicebook, u1,u2 : User, c : Content, w, w' : Wall |
-		invariants[n] and addTag[n, n', u1, u2, c, w, w'] implies
+		invariants[n] and addTagInvariant[n, n', u1, u2, c, w, w'] implies
 			invariants[n']
 }
 
 assert removeTagPreservesInvariant {
 	all n, n' : Nicebook, u : User, c : Content, w, w' : Wall |
-		invariants[n] and removeTag[n, n', u, c, w, w'] implies
+		invariants[n] and removeTagInvariant[n, n', u, c, w, w'] implies
 			invariants[n']
 }
 
@@ -254,8 +254,8 @@ pred invariants [n: Nicebook] {
 	all u: User | userInvariant[u, n]
 	all c: Content | contentInvariant[c, n]
 	all t: Tag | tagInvariant[t, n]
-	all n' : Nicebook, u1, u2: User, c : Content, w, w' : Wall | addTag[n, n', u1, u2, c, w, w']
-	all n' : Nicebook, u : User, c : Content, w, w' : Wall | removeTag[n, n', u, c, w, w']
+	all n' : Nicebook, u1, u2: User, c : Content, w, w' : Wall | addTagInvariant[n, n', u1, u2, c, w, w']
+	all n' : Nicebook, u : User, c : Content, w, w' : Wall | removeTagInvariant[n, n', u, c, w, w']
 }
 
 /* privacy setting
