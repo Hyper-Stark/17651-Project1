@@ -124,45 +124,6 @@ assert addCommentPreserveInv {
 }
 check addCommentPreserveInv for 10
 
-run{}for 3 but exactly 5 Content
-
-
-/*abstract sig PrivacyLevel {}
-one OnlyMe, Friends, FriendsOfFriends, Everyone extends PrivacyLevel {}
-
-// 2. operations for modifying user content
-
-// upload a piece of content, photo, comment, or note
-pred upload [] {
-// only the owner or owner’s friends can post notes or photos
-}
-
-// add a comment to an existing photo, note, or another comment
-pred addComment [] {
-	// only viewable content to a user can be added comment
-}
-
-
-// add a tag to a note or photo
-pred addTag [] {
-	// the content should publish on the wall of the tagged user
-}
-
-// remove a tag on a note or photo
-pred removeTag[] {
-}
-
-
-// 3. Privacy setting that control access to those content
-
-fun viewable [u: User] {
-	// return the content that can be viewed by the user
-}
-
-assert NoPrivacyViolation {
-	// violation occurs if a user is able to see content not in `viewable`
-}*/
-
 pred userInvariant [u: User, b: Nicebook] {
 	// if u1 is a friend of u2, then u2 is also a friend of u1
 	all u1, u2 : User | u1 != u2 and u1 in b.friends[u1] implies u2 in b.friends[u1]
@@ -183,6 +144,16 @@ pred invariants [b: Nicebook] {
 	all c: Content | contentInvariant[c, b]
 	all t: Tag | tagInvariant[t, b]
 }
+
+/* privacy setting
+fun viewable [u: User] {
+	// return the content that can be viewed by the user
+}
+
+assert NoPrivacyViolation {
+	// violation occurs if a user is able to see content not in `viewable`
+}
+*/
 
 run {
 	all b: Nicebook | invariants[b]
