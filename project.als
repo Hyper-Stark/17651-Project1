@@ -25,7 +25,6 @@ sig Nicebook {
 	friends: User -> User,			// friends of a user
 	walls: User -> one Wall, 			// user's wall
 	own: User -> Content,			// content uploaded by the user
-//	view: User -> Content, 			// viewable content to an user
 
 	published: Wall -> Content,		// published content on the wall
 	wallPrivacy: Wall -> PrivacyLevel,	// wall's privacy level
@@ -203,9 +202,9 @@ pred contentInvariant [c: Content, n: Nicebook] {
 // add a tag to a note or photo
 pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, w, w' : Wall] {
 
-	//precondition: 
-	//user who tags another user must be that user's friend, i.e., u1 should be a friend of u2(tagged user)
-	//w is the wall of user u2
+	// precondition: 
+	// user who tags another user must be that user's friend, i.e., u1 should be a friend of u2(tagged user)
+	// w is the wall of user u2
 	(u1 in n.friends[u2]) and (w in n.walls[u2])
 	// the content to be tagged must be published on some wall
 	some w1: Wall | w1 in (n.published).c
@@ -215,12 +214,11 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, w, w' : Wall
 	n'.published = n.published + w->c
 	n'.tags = n.tags + c -> (n.references).u2
 	
-	//nothing else changes 
+	// nothing else changes 
 	n'.friends = n.friends
 	n'.own = n.own
 	n'.walls = n.walls
 	n'.comments = n.comments
-	n'.view = n.view
 	n'.references = n.references
 	n'.wallPrivacy = n.wallPrivacy
 }
@@ -232,16 +230,19 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, w, w' : Wall] {
 	c in w.(n.published) and (w in n.walls[u])
 
 	//postcondition:
-	//content is removed from the wall of user and tag is removed from the content
-	n'.published = n.published - w->c
-	n'.tags = n.tags - c -> (n.references).u
+	// tag can be removed by owner of the post or tagged person
+	// content is removed from the wall of user and tag is removed from the content
+	((u in n.(own.c)) or (u in ((c.(n.tags)).(n.references))))
+	implies
+	(n'.published = n.published - w->c 
+	and 
+	n'.tags = n.tags - c -> (n.references).u)
 
 	//nothing else changes 
 	n'.friends = n.friends
 	n'.own = n.own
 	n'.walls = n.walls
 	n'.comments = n.comments
-	n'.view = n.view
 	n'.references = n.references
 	n'.wallPrivacy = n.wallPrivacy
 }
