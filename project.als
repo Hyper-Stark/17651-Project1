@@ -96,7 +96,7 @@ pred unpublish [u : User, c : Content, n,n' : Nicebook] {
 }
 
 // Upload a piece of content, excluding the attacked comments
-pred upload [n, n': Nicebook, u: User, c: Content] {
+pred upload [n, n': Nicebook, u: User, c: Content, viewPrivacy: PrivacyLevel, commentPrivacy: PrivacyLevel] {
 	// precondition
 	// the content doesn't exist
 	c not in n.own[u]
@@ -104,18 +104,18 @@ pred upload [n, n': Nicebook, u: User, c: Content] {
 	// postcondition
 	// the content belongs to the user
 	n'.own = n.own + (u -> c)
-	// the privacy level is same as the wall's privacy TODO wait for Olivia - setPrivacy[]
-	c.ViewPrivacy = n'.wallPrivacy[n'.walls[u]]
-	// TODO the content is shown on the user's wall ... when wall privacy is published?
-	n'.published = n.published + (n.walls[u] -> c)
-	// add to view ... DISCUSS, viewable existed, should it exist?
-	// DISCUSS ... the user can only be tagged by friends, but user cannot be his own friend
+	// set privacy of the content
+	c.ViewPrivacy = PrivacyLevel
+	c.CommentPrivacy = commentPrivacy
 
 	n'.users = n.users
 	n'.friends = n.friends
 	n'.walls = n.walls
+	n'.published = n.published
 	n'.wallPrivacy = n.wallPrivacy
 	n'.comments = n.comments
+	n'.tags = n.tags
+	n'.references = n.references
 }
 
 // Remove an existing piece of content from a user’s account.
@@ -126,12 +126,17 @@ pred remove [n, n': Nicebook, u: User, c: Content] {
 
 	// postcondition
 	// remove the content form the user
-	n'.own = n.own ++ (u -> (n.own[u] - c))
-	// add to view ... DISCUSS, viewable existed, should it exist?
-	// removed from wall TODO when it's published
-	n'.published[n.walls[u]] = n.published[n.walls[u]] - c
-	// remove the attached comments ... TODO
-	// DISCUSS ... the user can only be tagged by friends, but user cannot be his own friend
+	n'.own = n.own - (u -> c)
+	// remove from published
+	n'.published = n.published - (n.walls[u] -> c)
+	// remove the attached comments
+	n'.comments = n.comments - (c -> n.comments[c])
+	// remove tags of the content
+	n'.tags = n.tags - (c -> n.tags[c])
+	// remove references from tags
+	n'.references = n.references - (n.tags[c] -> n.users)
+	// photos contained by the note should be removed
+	c in Note implies remove[n, n', u, c.contains]
 
 	n'.users = n.users
 	n'.friends = n.friends
@@ -145,19 +150,22 @@ pred addComment [n, n': Nicebook, u: User, comment: Comment, content: Content] {
 	// the comment doesn't exist
 	comment not in n.comments[content]
 	// authorized to add comment to the content
-	// TODO from Olivia
+	content in commentable[n, u]
 
 	// postcondition
+	comment.attachedTo = content
 	// the comment must belong to the user
-	n'.own[u] = n.own[u] + comment
-	// add to view ... DISCUSS, viewable existed, should it exist?
-	// add to published ... TODO if the contnet is published on some wall, the comment should also be published
+	n'.own = n.own + (u -> comment)
 	// the comment is attached to the content
-	n'.comments[content] = n.comments[content] + comment
+	n'.comments = n.comments + (content -> comment)
+	// set comment's privacy
+	comment.ViewPrivacy = content.ViewPrivacy
+	comment.CommentPrivacy = content.CommentPrivacy
 
 	n'.users = n.users
 	n'.friends = n.friends
 	n'.walls = n.walls
+	n'.published = n.published
 	n'.wallPrivacy = n.wallPrivacy
 	n'.comments = n.comments
 	n'.tags = n.tags
@@ -165,10 +173,10 @@ pred addComment [n, n': Nicebook, u: User, comment: Comment, content: Content] {
 }
 
 assert uploadPreserveInv {
-	all n, n': Nicebook, u: User, c: Content | 
-		invariants[n] and upload[n, n', u, c] implies invariants[n']
+	all n, n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPrivacy:  PrivacyLevel| 
+		invariants[n] and upload[n, n', u, c, vPrivacy, cPrivacy] implies invariants[n']
 }
-check uploadPreserveInv
+//check uploadPreserveInv
 
 assert removePreserveInv {
 	all n, n': Nicebook, u: User, c: Content | 
@@ -290,23 +298,6 @@ fun commentable [n : Nicebook, u : User] : set Content{
 			     (c.CommentPrivacy = Everyone) }	
 }
 
-pred addComment[n, n' : Nicebook, m : Comment, c : Content, u : User] {
-	// precondition
-	c in commentable[n, u]
-	// postcondition
-	n'.friends = n.friends
-	n'.own = n.own
-	n'.walls = n.walls
-	n'.comments = n.comments + c -> m
-	n'.tags = n.tags
-	n'.view = n.view
-	n'.references = n.references
-	n'.published = n.published
-	n'.wallPrivacy = n.wallPrivacy
-
-	m.attachedTo = c
-}
-
 pred privacyInvariant[n : Nicebook, w : Wall, c : Content] {
 	//the content privacy level is no lower than the wall privacy level
 	n.wallPrivacy[w] = OnlyMe implies c.ViewPrivacy = OnlyMe and c.CommentPrivacy = OnlyMe
@@ -349,18 +340,6 @@ pred invariants [n: Nicebook] {
 	all n' : Nicebook, u1, u2: User, c : Content, w, w' : Wall | addTagInvariant[n, n', u1, u2, c, w, w']
 	all n' : Nicebook, u : User, c : Content, w, w' : Wall | removeTagInvariant[n, n', u, c, w, w']
 }
-
-/* privacy setting
-fun viewable [u: User] {
-	// return the content that can be viewed by the user
-}
-
-assert NoPrivacyViolation {
-	// violation occurs if a user is able to see content not in `viewable`
-}
-*/
-
-
 
 run {
 	all n: Nicebook | invariants[n]
