@@ -25,7 +25,7 @@ sig Nicebook {
 	friends: User -> User,			// friends of a user
 	walls: User -> one Wall, 			// user's wall
 	own: User -> Content,			// content uploaded by the user
-	view: User -> Content, 			// viewable content to an user
+//	view: User -> Content, 			// viewable content to an user
 
 	published: Wall -> Content,		// published content on the wall
 	wallPrivacy: Wall -> PrivacyLevel,	// wall's privacy level
@@ -332,7 +332,7 @@ fun viewable [n : Nicebook, u: User] : set Content{
 
 assert NoPrivacyViolation {
 	// violation occurs if a user is able to see content not in `viewable`
-	all n : Nicebook | all u : User | n.view[u] in viewable[n, u]
+	
 }
 //check NoPrivacyViolation
 
