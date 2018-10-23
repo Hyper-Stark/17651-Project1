@@ -54,24 +54,16 @@ pred publish [u : User, c : Content, n,n' : Nicebook] {
 //	n'.published = n.published
 	n'.wallPrivacy = n.wallPrivacy	
 
-	(
-		(u in n.users) 
-			and
-	      	(c not in n.users.(n.walls).(n.published))
-	)
-		implies
-	n'.published = n.published + 
-				(u.(n.walls) -> c) + 
-				(c.(n.tags).(n.references).(n.walls) -> c)
+       //the user should be a registered user
+	u in n.users
+	//the content should not has been published by any user in the nicebook
+	c not in n.users.(n.walls).(n.published)
 
-	(
-		(u not in n.users)
-			or 
-		(c in n.users.(n.walls).(n.published))
-	)
-		implies
-	n'.published = n.published
-	
+	n'.published = n.published + 
+				//add the content to user self's wall
+				(u.(n.walls) -> c) + 
+				//add the content to all taged users' wall
+				(c.(n.tags).(n.references).(n.walls) -> c)	
 }
 
 // hide a piece of content on a user’s wall
@@ -89,19 +81,19 @@ pred unpublish [u : User, c : Content, n,n' : Nicebook] {
 //	n'.published = n.published
 	n'.wallPrivacy = n.wallPrivacy
 
-	(
-		(u in n.users) and (c in u.(n.own))
-	)
-		implies
+       //the user should be a registered user
+       u in n.users
+       //the content should owned by the user
+	c in u.(n.own)
+       //the content should has been published
+       c in u.(n.walls).(n.published)
+
 	n'.published = n.published - 
+                            //remove the content from user self's wall
 				(u.(n.walls) -> c) - 
+                            //remove the content from all taged users' wall
 				(c.(n.tags).(n.references).(n.walls) -> c)
 
-	(		
-		(u not in n.users) or (c not in u.(n.own))
-	)
-		implies
-	n'.published = n.published
 }
 
 // Upload a piece of content, excluding the attacked comments
@@ -356,6 +348,8 @@ assert NoPrivacyViolation {
 	// violation occurs if a user is able to see content not in `viewable`
 }
 */
+
+
 
 run {
 	all n: Nicebook | invariants[n]
