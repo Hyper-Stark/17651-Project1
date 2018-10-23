@@ -208,7 +208,7 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, w, w' : Wall
 	//w is the wall of user u2
 	(u1 in n.friends[u2]) and (w in n.walls[u2])
 	// the content to be tagged must be published on some wall
-	some w1: Wall | w1 in (n.published).c
+	some (n.published).c
 	
 	//postcondition:
 	//content is added to the wall of user and tag is added to the content
