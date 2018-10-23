@@ -208,7 +208,7 @@ pred contentInvariant [c: Content, n: Nicebook] {
 }
 
 // add a tag to a note or photo
-pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, w, w' : Wall] {
+pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, w : Wall] {
 
 	// precondition: 
 	// user who tags another user must be that user's friend, i.e., u1 should be a friend of u2(tagged user)
@@ -232,7 +232,7 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, w, w' : Wall
 }
 
 // remove a tag on a note or photo
-pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, w, w' : Wall] {
+pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, w : Wall] {
 	// precondition:
 	// content c must be present in tagged user's wall and w is the wall of user u
 	c in w.(n.published) and (w in n.walls[u])
@@ -256,14 +256,14 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, w, w' : Wall] {
 }
 
 assert addTagPreservesInvariant {
-	all n, n' : Nicebook, u1,u2 : User, c : Content, w, w' : Wall |
-		invariants[n] and addTagInvariant[n, n', u1, u2, c, w, w'] implies
+	all n, n' : Nicebook, u1,u2 : User, c : Content, w : Wall |
+		invariants[n] and addTagInvariant[n, n', u1, u2, c, w] implies
 			invariants[n']
 }
 
 assert removeTagPreservesInvariant {
-	all n, n' : Nicebook, u : User, c : Content, w, w' : Wall |
-		invariants[n] and removeTagInvariant[n, n', u, c, w, w'] implies
+	all n, n' : Nicebook, u : User, c : Content, w : Wall |
+		invariants[n] and removeTagInvariant[n, n', u, c, w] implies
 			invariants[n']
 }
 
@@ -337,8 +337,8 @@ pred invariants [n: Nicebook] {
 	all u: User | userInvariant[u, n]
 	all c: Content | contentInvariant[c, n]
 	all t: Tag | tagInvariant[t, n]
-	all n' : Nicebook, u1, u2: User, c : Content, w, w' : Wall | addTagInvariant[n, n', u1, u2, c, w, w']
-	all n' : Nicebook, u : User, c : Content, w, w' : Wall | removeTagInvariant[n, n', u, c, w, w']
+	all n' : Nicebook, u1, u2: User, c : Content, w : Wall | addTagInvariant[n, n', u1, u2, c, w]
+	all n' : Nicebook, u : User, c : Content, w : Wall | removeTagInvariant[n, n', u, c, w]
 }
 
 run {
