@@ -317,15 +317,25 @@ pred privacyInvariant[n : Nicebook, w : Wall, c : Content] {
 
 fun viewable [n : Nicebook, u: User] : set Content{
 	// return the content that can be viewed by the user
-	{ c : Content | (c.ViewPrivacy = OnlyMe and n.own.c = u) or
+	{ c : n.published | (c.ViewPrivacy = OnlyMe and n.own.c = u) or
 			     (c.ViewPrivacy = Friends and u in n.friends[n.own.c] + n.own.c) or
 			     (c.ViewPrivacy = FriendsOfFriends and u in n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c) or
 			     (c.ViewPrivacy = Everyone) }
 }
 
+pred publishInvariant[n : Nicebook] {
+	all u : n.users | u.own - n.published[n.walls[u]] not in viewable[n, u]
+}
+
+pred privacyInvariant[n : Nicebook] {
+    	all c : Content | all u : User | (c.ViewPrivacy = OnlyMe and u != n.own.c implies c not in viewable[n, u]) and
+						     (c.ViewPrivacy = Friends and u not in n.own.c + n.friends[u] implies c not in viewable[n, u]) and
+						     (c.ViewPrivacy = FriendsOfFriends and u not in n.own.c + n.friends[u] + n.friends[n.friends[u]] implies c not in viewable[n, u])
+}
+
 assert NoPrivacyViolation {
 	// violation occurs if a user is able to see content not in `viewable`
-	
+	all n : Nicebook | publishInvariant[n] and privacyInvariant[n]
 }
 //check NoPrivacyViolation
 
