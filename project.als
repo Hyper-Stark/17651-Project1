@@ -225,9 +225,13 @@ pred contentInvariant [c: Content, n: Nicebook] {
 // add a tag to a note or photo
 pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, w : Wall] {
 
+	//u1 is the user who launched the "addTag" action
+	//u2 is the user who is tagged by u1
+	//w is the wall of user u2
+
 	// precondition: 
-	// user who tags another user must be that user's friend, i.e., u1 should be a friend of u2(tagged user)
-	// w is the wall of user u2
+	// user who tags another user must be that user's friend, i.e., 
+	// u1 should be a friend of u2(tagged user)
 	(u1 in n.friends[u2]) and (w in n.walls[u2])
 	// the content to be tagged must be published on some wall
 	some (n.published).c
