@@ -287,17 +287,18 @@ assert removeTagPreservesInvariant {
 }
 
 // Privacy part
-pred ContentInvariant[] {
-	// The user who has a content published on his/her wall should be the one
+pred wallInvariant[n : Nicebook] {
+	// The user who has a content published on his/her wall should be the owner or the one
 	// that is tagged by this content.
-	all n : Nicebook | all u : User | all c : n.published[n.walls[u]] | all t : n.tags[c] |
-		n.own.c in n.references[t]
+	all u : User | all c : n.published[n.walls[u]] | all t : n.tags[c] |
+		 u = n.own.c or n.own.c in n.references[t]
 
 }
 
 pred setContentPrivacy[n : Nicebook, c : Content, p : PrivacyLevel, u : User] {
 	// precondition
 	c in n.published[n.walls[u]]
+	u -> c in n.own
 	// postcondition
 	c.ViewPrivacy = p
 }
@@ -310,35 +311,35 @@ pred setCommentPrivacy[n : Nicebook, c : Content, p : PrivacyLevel, u : User] {
 }
 
 fun commentable [n : Nicebook, u : User] : set Content{
-	// return the contents that the user 
+	// return the contents that the user can comment
 	{ c : Content | (c.CommentPrivacy = OnlyMe and n.own.c = u) or
 			     (c.CommentPrivacy = Friends and u in n.friends[n.own.c] + n.own.c) or
 			     (c.CommentPrivacy = FriendsOfFriends and u in n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c) or
 			     (c.CommentPrivacy = Everyone) }	
 }
 
-pred privacyInvariant[n : Nicebook, w : Wall, c : Content] {
+pred privacyWallContentInvariant[n : Nicebook, w : Wall, c : Content] {
 	//the content privacy level is no lower than the wall privacy level
 	n.wallPrivacy[w] = OnlyMe implies c.ViewPrivacy = OnlyMe and c.CommentPrivacy = OnlyMe
-	n.wallPrivacy[w] = Friends implies c.ViewPrivacy = Friends + OnlyMe and c.CommentPrivacy = Friends + OnlyMe
-	n.wallPrivacy[w] = FriendsOfFriends implies c.ViewPrivacy = FriendsOfFriends + Friends + OnlyMe and c.CommentPrivacy = FriendsOfFriends + Friends + OnlyMe
+	n.wallPrivacy[w] = Friends implies c.ViewPrivacy in Friends + OnlyMe and c.CommentPrivacy in Friends + OnlyMe
+	n.wallPrivacy[w] = FriendsOfFriends implies c.ViewPrivacy in FriendsOfFriends + Friends + OnlyMe and c.CommentPrivacy in FriendsOfFriends + Friends + OnlyMe
 	n.wallPrivacy[w] = Everyone implies c.ViewPrivacy = PrivacyLevel and c.CommentPrivacy = PrivacyLevel
 }
 
 fun viewable [n : Nicebook, u: User] : set Content{
 	// return the content that can be viewed by the user
-	{ c : n.published | (c.ViewPrivacy = OnlyMe and n.own.c = u) or
+	{ c : n.published[Wall] | (c.ViewPrivacy = OnlyMe and n.own.c = u) or
 			     (c.ViewPrivacy = Friends and u in n.friends[n.own.c] + n.own.c) or
 			     (c.ViewPrivacy = FriendsOfFriends and u in n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c) or
 			     (c.ViewPrivacy = Everyone) }
 }
 
 pred publishInvariant[n : Nicebook] {
-	all u : n.users | u.own - n.published[n.walls[u]] not in viewable[n, u]
+	all u : n.users | n.own[u] - n.published[n.walls[u]] not in viewable[n, u]
 }
 
-pred privacyInvariant[n : Nicebook] {
-    	all c : Content | all u : User | (c.ViewPrivacy = OnlyMe and u != n.own.c implies c not in viewable[n, u]) and
+pred privacyInvariant[n : Nicebook, c : Content] {
+    	all u : User | (c.ViewPrivacy = OnlyMe and u != n.own.c implies c not in viewable[n, u]) and
 						     (c.ViewPrivacy = Friends and u not in n.own.c + n.friends[u] implies c not in viewable[n, u]) and
 						     (c.ViewPrivacy = FriendsOfFriends and u not in n.own.c + n.friends[u] + n.friends[n.friends[u]] implies c not in viewable[n, u])
 }
@@ -356,8 +357,12 @@ pred invariants [n: Nicebook] {
 	all u: User | userInvariant[u, n]
 	all c: Content | contentInvariant[c, n]
 	all t: Tag | tagInvariant[t, n]
-	all n' : Nicebook, u1, u2: User, c : Content, w : Wall | addTagInvariant[n, n', u1, u2, c, w]
-	all n' : Nicebook, u : User, c : Content, w : Wall | removeTagInvariant[n, n', u, c, w]
+	all n' : Nicebook, u1, u2: User, c : Content, w, w' : Wall | addTagInvariant[n, n', u1, u2, c, w, w']
+	all n' : Nicebook, u : User, c : Content, w, w' : Wall | removeTagInvariant[n, n', u, c, w, w']
+	all w : Wall, c : Content | privacyWallContentInvariant[n, w, c]
+	all c : Content | privacyInvariant[n, c]
+	publishInvariant[n]
+	wallInvariant[n]
 }
 
 run {
