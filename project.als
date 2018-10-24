@@ -222,7 +222,7 @@ pred contentInvariant [c: Content, n: Nicebook] {
 }
 
 // add a tag to a note or photo
-pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, w : Wall, t : Tag] {
+pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, t : Tag] {
 
 	//u1 is the user who launched the "addTag" action
 	//u2 is the user who is tagged by u1
@@ -231,18 +231,19 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, w : Wall, t 
 	// precondition: 
 	// user who tags another user must be that user's friend, i.e., 
 	// u1 should be a friend of u2(tagged user)
-	(u1 in n.friends[u2]) and (w in n.walls[u2])
+	(u1 in n.friends[u2])
 	// the content to be tagged must be published on some wall
 	some (n.published).c
 	
 	//postcondition:
 	//content is added to the wall of user and tag is added to the content
-	n'.published = n.published + w->c
+	n'.published = n.published + (u2.(n.walls))->c
 	n'.tags = n.tags + c -> t
 	n'.references = n.references + (t -> u2)
 	
 	
 	// nothing else changes 
+	n'.users = n.users
 	n'.friends = n.friends
 	n'.own = n.own
 	n'.walls = n.walls
@@ -267,6 +268,7 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, w : Wall] {
 	n'.tags = n.tags - c -> (n.references).u)
 
 	//nothing else changes 
+	n'.users = n.users
 	n'.friends = n.friends
 	n'.own = n.own
 	n'.walls = n.walls
@@ -357,8 +359,8 @@ pred invariants [n: Nicebook] {
 	all u: User | userInvariant[u, n]
 	all c: Content | contentInvariant[c, n]
 	all t: Tag | tagInvariant[t, n]
-	all n' : Nicebook, u1, u2: User, c : Content, w, w' : Wall | addTagInvariant[n, n', u1, u2, c, w, w']
-	all n' : Nicebook, u : User, c : Content, w, w' : Wall | removeTagInvariant[n, n', u, c, w, w']
+	all n' : Nicebook, u1, u2: User, c : Content, t:Tag | addTagInvariant[n, n', u1, u2, c]
+	all n' : Nicebook, u : User, c : Content, w : Wall | removeTagInvariant[n, n', u, c, w]
 	all w : Wall, c : Content | privacyWallContentInvariant[n, w, c]
 	all c : Content | privacyInvariant[n, c]
 	publishInvariant[n]
