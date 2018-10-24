@@ -369,8 +369,6 @@ pred invariants [n: Nicebook] {
 	publishInvariant[n]
 
 	all c: Content | contentInvariant[c, n]
-	all n' : Nicebook, u1, u2: User, c : Content, t:Tag | addTagInvariant[n, n', u1, u2, c, t]
-	all n' : Nicebook, u : User, c : Content, t : Tag | removeTagInvariant[n, n', u, c, t]
 	all w : Wall, c : Content | privacyWallContentInvariant[n, w, c]
 }
 
