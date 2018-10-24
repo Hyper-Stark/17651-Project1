@@ -202,11 +202,11 @@ assert addCommentPreserveInv {
 }
 //check addCommentPreserveInv for 10
 
-pred userInvariant [u: User, n: Nicebook] {
+pred userInvariant [n: Nicebook] {
 	// a user cannot be his/her own friend
-	u not in n.friends[u]
+	all u : n.users | u not in n.friends[u]
 	// if u1 is a friend of u2, then u2 is also a friend of u1
-	all u1, u2 : User | (u1 != u2 and u2 in n.friends[u1]) implies u1 in n.friends[u2]
+	all u1, u2 : n.users | (u1 != u2 and u2 in n.friends[u1]) implies u1 in n.friends[u2]
 }
 
 pred tagInvariant [t: Tag, n: Nicebook] {
@@ -351,7 +351,7 @@ assert NoPrivacyViolation {
 //check removeTagPreservesInvariant for 7
 
 pred invariants [n: Nicebook] {
-	all u: User | userInvariant[u, n]
+	userInvariant[n]
 	all c: Content | contentInvariant[c, n]
 	all t: Tag | tagInvariant[t, n]
 	all n' : Nicebook, u1, u2: User, c : Content, t:Tag | addTagInvariant[n, n', u1, u2, c, t]
