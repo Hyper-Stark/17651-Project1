@@ -202,21 +202,23 @@ assert addCommentPreserveInv {
 }
 //check addCommentPreserveInv for 10
 
-pred userInvariant [n: Nicebook] {
+pred userInvariant[n: Nicebook] {
 	// a user cannot be his/her own friend
 	all u : n.users | u not in n.friends[u]
 	// if u1 is a friend of u2, then u2 is also a friend of u1
 	all u1, u2 : n.users | (u1 != u2 and u2 in n.friends[u1]) implies u1 in n.friends[u2]
 }
 
-pred tagInvariant [t: Tag, n: Nicebook] {
+pred tagInvariant [n: Nicebook] {
 	// the tag cannot be attached to comment
-	no t: Tag | t in n.tags[Comment]
+//	no t: Tag | t in n.tags[Comment] #[MODIFY]
+	no Comment.(n.tags)
 }
 
 pred contentInvariant [c: Content, n: Nicebook] {
 	// the content belongs to only one user
-	one u: User | c in n.own[u]
+//	one u: User | c in n.own[u] #[MODIFY]
+	one n.own.c
 }
 
 // add a tag to a note or photo
@@ -351,9 +353,11 @@ assert NoPrivacyViolation {
 //check removeTagPreservesInvariant for 7
 
 pred invariants [n: Nicebook] {
+
+	tagInvariant[n]
 	userInvariant[n]
+
 	all c: Content | contentInvariant[c, n]
-	all t: Tag | tagInvariant[t, n]
 	all n' : Nicebook, u1, u2: User, c : Content, t:Tag | addTagInvariant[n, n', u1, u2, c, t]
 	all n' : Nicebook, u : User, c : Content, w : Wall | removeTagInvariant[n, n', u, c, w]
 	all w : Wall, c : Content | privacyWallContentInvariant[n, w, c]
