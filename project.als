@@ -252,18 +252,19 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, t : Tag] {
 }
 
 // remove a tag on a note or photo
-pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, w : Wall] {
+pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, t : Tag] {
 	// precondition:
-	// content c must be present in tagged user's wall and w is the wall of user u
-	c in w.(n.published) and (w in n.walls[u])
-	(u in n.(own.c)) or (u in ((c.(n.tags)).(n.references)))
+	// content c must be present in tagged user's wall 
+	c in ((u.(n.walls)). (n.published))
+	// content is removed from the wall of user and tag is removed from the content
+	(u in n.(own.c)) or (u in (t.(n.references)))
 
 	//postcondition:
 	// tag can be removed by owner of the post or tagged person
-	// content is removed from the wall of user and tag is removed from the content
-	n'.published = n.published - (w->c)
-	n'.tags = n.tags - (c -> (n.references).u)
-	n'.references = n.references - ((n.references).u -> u)
+	
+	n'.published = n.published - (u.(n.walls))->c  
+	n'.tags = n.tags - (c -> t) 
+	n'.references = n.references - (t -> u)
 
 	//nothing else changes 
 	n'.users = n.users
@@ -281,8 +282,8 @@ assert addTagPreservesInvariant {
 }
 
 assert removeTagPreservesInvariant {
-	all n, n' : Nicebook, u : User, c : Content, w : Wall |
-		invariants[n] and removeTagInvariant[n, n', u, c, w] implies
+	all n, n' : Nicebook, u : User, c : Content, t : Tag |
+		invariants[n] and removeTagInvariant[n, n', u, c, t] implies
 			invariants[n']
 }
 
@@ -359,7 +360,7 @@ pred invariants [n: Nicebook] {
 
 	all c: Content | contentInvariant[c, n]
 	all n' : Nicebook, u1, u2: User, c : Content, t:Tag | addTagInvariant[n, n', u1, u2, c, t]
-	all n' : Nicebook, u : User, c : Content, w : Wall | removeTagInvariant[n, n', u, c, w]
+	all n' : Nicebook, u : User, c : Content, t : Tag | removeTagInvariant[n, n', u, c, t]
 	all w : Wall, c : Content | privacyWallContentInvariant[n, w, c]
 	privacyInvariant[n]
 	publishInvariant[n]
