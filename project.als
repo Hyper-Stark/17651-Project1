@@ -31,7 +31,6 @@ sig Nicebook {
 
 	comments: Content -> Comment, 	// content's attached comments
 	tags: Content -> Tag,			// tags in the content
-
 	references: Tag -> one User,		// tag reference to an user
 }
 
@@ -110,17 +109,17 @@ pred unpublish [u : User, c : Content, n,n' : Nicebook] {
 }
 
 // Upload a piece of content, excluding the attacked comments
-pred upload [n, n': Nicebook, u: User, c: Content, viewPrivacy: PrivacyLevel, commentPrivacy: PrivacyLevel] {
+pred upload [n, n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPrivacy: PrivacyLevel] {
 	// precondition
 	// the content doesn't exist
-	c not in n.own[u]
+	c not in n.own[User]
 
 	// postcondition
 	// the content belongs to the user
 	n'.own = n.own + (u -> c)
 	// set privacy of the content
-	c.ViewPrivacy = PrivacyLevel
-	c.CommentPrivacy = commentPrivacy
+	c.ViewPrivacy = vPrivacy
+	c.CommentPrivacy = cPrivacy
 
 	n'.users = n.users
 	n'.friends = n.friends
@@ -141,14 +140,14 @@ pred remove [n, n': Nicebook, u: User, c: Content] {
 	// postcondition
 	// remove the content form the user
 	n'.own = n.own - (u -> c)
-	// remove from published
-	n'.published = n.published - (n.walls[u] -> c)
+	// remove from owner's and tagged users' published
+	n'.published = n.published - (n.walls[u + n.references[n.tags[c]]]  -> c)
 	// remove the attached comments
 	n'.comments = n.comments - (c -> n.comments[c])
 	// remove tags of the content
 	n'.tags = n.tags - (c -> n.tags[c])
 	// remove references from tags
-	n'.references = n.references - (n.tags[c] -> n.users)
+	n'.references = n.references - (n.tags[c] -> n.references[n.tags[c]])
 	// photos contained by the note should be removed
 	c in Note implies remove[n, n', u, c.contains]
 
