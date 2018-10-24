@@ -90,7 +90,6 @@ pred unpublish [u : User, c : Content, n,n' : Nicebook] {
 	n'.walls = n.walls
 	n'.comments = n.comments
 	n'.tags = n.tags
-	n'.view = n.view
 	n'.references = n.references
 //	n'.published = n.published
 	n'.wallPrivacy = n.wallPrivacy
