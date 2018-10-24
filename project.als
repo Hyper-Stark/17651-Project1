@@ -219,6 +219,7 @@ pred contentInvariant [c: Content, n: Nicebook] {
 	// the content belongs to only one user
 //	one u: User | c in n.own[u] #[MODIFY]
 	one n.own.c
+	c not in c.^attachedTo
 }
 
 // add a tag to a note or photo
@@ -354,7 +355,6 @@ assert NoPrivacyViolation {
 //check removeTagPreservesInvariant for 7
 
 pred invariants [n: Nicebook] {
-
 	tagInvariant[n]
 	userInvariant[n]
 
