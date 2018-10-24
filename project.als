@@ -223,7 +223,7 @@ pred contentInvariant [c: Content, n: Nicebook] {
 }
 
 // add a tag to a note or photo
-pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, w : Wall] {
+pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, w : Wall, t : Tag] {
 
 	//u1 is the user who launched the "addTag" action
 	//u2 is the user who is tagged by u1
@@ -239,7 +239,9 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, w : Wall] {
 	//postcondition:
 	//content is added to the wall of user and tag is added to the content
 	n'.published = n.published + w->c
-	n'.tags = n.tags + c -> (n.references).u2
+	n'.tags = n.tags + c -> t
+	n'.references = n.references + (t -> u2)
+	
 	
 	// nothing else changes 
 	n'.friends = n.friends
@@ -275,8 +277,8 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, w : Wall] {
 }
 
 assert addTagPreservesInvariant {
-	all n, n' : Nicebook, u1,u2 : User, c : Content, w : Wall |
-		invariants[n] and addTagInvariant[n, n', u1, u2, c, w] implies
+	all n, n' : Nicebook, u1,u2 : User, c : Content, w : Wall, t : Tag |
+		invariants[n] and addTagInvariant[n, n', u1, u2, c, w, t] implies
 			invariants[n']
 }
 
@@ -356,7 +358,7 @@ pred invariants [n: Nicebook] {
 	all u: User | userInvariant[u, n]
 	all c: Content | contentInvariant[c, n]
 	all t: Tag | tagInvariant[t, n]
-	all n' : Nicebook, u1, u2: User, c : Content, w : Wall | addTagInvariant[n, n', u1, u2, c, w]
+	all n' : Nicebook, u1, u2: User, c : Content, w : Wall, t : Tag | addTagInvariant[n, n', u1, u2, c, w, t]
 	all n' : Nicebook, u : User, c : Content, w : Wall | removeTagInvariant[n, n', u, c, w]
 }
 
