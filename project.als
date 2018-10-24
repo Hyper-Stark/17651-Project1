@@ -47,7 +47,6 @@ pred publish [u : User, c : Content, n,n' : Nicebook,
 	n'.walls = n.walls
 	n'.comments = n.comments
 	n'.tags = n.tags
-	n'.view = n.view
 	n'.references = n.references
 //	n'.published = n.published
 	n'.wallPrivacy = n.wallPrivacy	
@@ -358,7 +357,7 @@ pred invariants [n: Nicebook] {
 	all u: User | userInvariant[u, n]
 	all c: Content | contentInvariant[c, n]
 	all t: Tag | tagInvariant[t, n]
-	all n' : Nicebook, u1, u2: User, c : Content, t:Tag | addTagInvariant[n, n', u1, u2, c]
+	all n' : Nicebook, u1, u2: User, c : Content, t:Tag | addTagInvariant[n, n', u1, u2, c, t]
 	all n' : Nicebook, u : User, c : Content, w : Wall | removeTagInvariant[n, n', u, c, w]
 	all w : Wall, c : Content | privacyWallContentInvariant[n, w, c]
 	all c : Content | privacyInvariant[n, c]
