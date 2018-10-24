@@ -337,8 +337,8 @@ pred publishInvariant[n : Nicebook] {
 	all u : n.users | (n.own[u] - n.published[n.walls[u]]) not in viewable[n, u]
 }
 
-pred privacyInvariant[n : Nicebook, c : Content] {
-    	all u : User | (c.ViewPrivacy = OnlyMe and u != n.own.c implies c not in viewable[n, u]) and
+pred privacyInvariant[n : Nicebook] {
+    	all c : Content | all u : User | (c.ViewPrivacy = OnlyMe and u != n.own.c implies c not in viewable[n, u]) and
 						     (c.ViewPrivacy = Friends and u not in (n.own.c + n.friends[u]) implies c not in viewable[n, u]) and
 						     (c.ViewPrivacy = FriendsOfFriends and u not in (n.own.c + n.friends[u] + n.friends[n.friends[u]]) implies c not in viewable[n, u])
 }
@@ -359,7 +359,7 @@ pred invariants [n: Nicebook] {
 	all n' : Nicebook, u1, u2: User, c : Content, t:Tag | addTagInvariant[n, n', u1, u2, c, t]
 	all n' : Nicebook, u : User, c : Content, w : Wall | removeTagInvariant[n, n', u, c, w]
 	all w : Wall, c : Content | privacyWallContentInvariant[n, w, c]
-	all c : Content | privacyInvariant[n, c]
+	privacyInvariant[n]
 	publishInvariant[n]
 	wallInvariant[n]
 }
