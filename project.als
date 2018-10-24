@@ -289,8 +289,9 @@ assert removeTagPreservesInvariant {
 
 // Privacy part
 pred wallInvariant[n : Nicebook] {
-	// The user who has a content published on his/her wall should be the owner or the one
-	// that is tagged by this content.
+	// The user who has a content published on his/her wall should be the owner 
+	//or the one that is tagged by this content.
+	one n.walls.Wall //# this may cause no instance found
 	all u : User | all c : n.published[n.walls[u]] | all t : n.tags[c] |
 		 u = n.own.c or n.own.c in n.references[t]
 
@@ -356,15 +357,17 @@ assert NoPrivacyViolation {
 pred invariants [n: Nicebook] {
 
 	tagInvariant[n]
+	wallInvariant[n]
 	userInvariant[n]
+	privacyInvariant[n]
+	publishInvariant[n]
+	
 
 	all c: Content | contentInvariant[c, n]
 	all n' : Nicebook, u1, u2: User, c : Content, t:Tag | addTagInvariant[n, n', u1, u2, c, t]
 	all n' : Nicebook, u : User, c : Content, t : Tag | removeTagInvariant[n, n', u, c, t]
 	all w : Wall, c : Content | privacyWallContentInvariant[n, w, c]
-	privacyInvariant[n]
-	publishInvariant[n]
-	wallInvariant[n]
+
 }
 
 run {
