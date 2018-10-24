@@ -297,7 +297,6 @@ pred wallInvariant[n : Nicebook] {
 
 pred setContentPrivacy[n : Nicebook, c : Content, p : PrivacyLevel, u : User] {
 	// precondition
-	c in n.published[n.walls[u]]
 	u -> c in n.own
 	// postcondition
 	c.ViewPrivacy = p
@@ -313,8 +312,8 @@ pred setCommentPrivacy[n : Nicebook, c : Content, p : PrivacyLevel, u : User] {
 fun commentable [n : Nicebook, u : User] : set Content{
 	// return the contents that the user can comment
 	{ c : Content | (c.CommentPrivacy = OnlyMe and n.own.c = u) or
-			     (c.CommentPrivacy = Friends and u in n.friends[n.own.c] + n.own.c) or
-			     (c.CommentPrivacy = FriendsOfFriends and u in n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c) or
+			     (c.CommentPrivacy = Friends and u in (n.friends[n.own.c] + n.own.c)) or
+			     (c.CommentPrivacy = FriendsOfFriends and u in (n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c)) or
 			     (c.CommentPrivacy = Everyone) }	
 }
 
@@ -322,26 +321,26 @@ pred privacyWallContentInvariant[n : Nicebook, w : Wall, c : Content] {
 	//the content privacy level is no lower than the wall privacy level
 	n.wallPrivacy[w] = OnlyMe implies c.ViewPrivacy = OnlyMe and c.CommentPrivacy = OnlyMe
 	n.wallPrivacy[w] = Friends implies c.ViewPrivacy in Friends + OnlyMe and c.CommentPrivacy in Friends + OnlyMe
-	n.wallPrivacy[w] = FriendsOfFriends implies c.ViewPrivacy in FriendsOfFriends + Friends + OnlyMe and c.CommentPrivacy in FriendsOfFriends + Friends + OnlyMe
+	n.wallPrivacy[w] = FriendsOfFriends implies c.ViewPrivacy in (FriendsOfFriends + Friends + OnlyMe) and c.CommentPrivacy in (FriendsOfFriends + Friends + OnlyMe)
 	n.wallPrivacy[w] = Everyone implies c.ViewPrivacy = PrivacyLevel and c.CommentPrivacy = PrivacyLevel
 }
 
 fun viewable [n : Nicebook, u: User] : set Content{
 	// return the content that can be viewed by the user
 	{ c : n.published[Wall] | (c.ViewPrivacy = OnlyMe and n.own.c = u) or
-			     (c.ViewPrivacy = Friends and u in n.friends[n.own.c] + n.own.c) or
-			     (c.ViewPrivacy = FriendsOfFriends and u in n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c) or
+			     (c.ViewPrivacy = Friends and u in (n.friends[n.own.c] + n.own.c)) or
+			     (c.ViewPrivacy = FriendsOfFriends and u in (n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c)) or
 			     (c.ViewPrivacy = Everyone) }
 }
 
 pred publishInvariant[n : Nicebook] {
-	all u : n.users | n.own[u] - n.published[n.walls[u]] not in viewable[n, u]
+	all u : n.users | (n.own[u] - n.published[n.walls[u]]) not in viewable[n, u]
 }
 
 pred privacyInvariant[n : Nicebook, c : Content] {
     	all u : User | (c.ViewPrivacy = OnlyMe and u != n.own.c implies c not in viewable[n, u]) and
-						     (c.ViewPrivacy = Friends and u not in n.own.c + n.friends[u] implies c not in viewable[n, u]) and
-						     (c.ViewPrivacy = FriendsOfFriends and u not in n.own.c + n.friends[u] + n.friends[n.friends[u]] implies c not in viewable[n, u])
+						     (c.ViewPrivacy = Friends and u not in (n.own.c + n.friends[u]) implies c not in viewable[n, u]) and
+						     (c.ViewPrivacy = FriendsOfFriends and u not in (n.own.c + n.friends[u] + n.friends[n.friends[u]]) implies c not in viewable[n, u])
 }
 
 assert NoPrivacyViolation {
