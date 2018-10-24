@@ -27,7 +27,7 @@ sig Nicebook {
 	own: User -> Content,			// content uploaded by the user
 
 	published: Wall -> Content,		// published content on the wall
-	wallPrivacy: Wall -> PrivacyLevel,	// wall's privacy level
+	wallPrivacy: Wall -> one PrivacyLevel,	// wall's privacy level
 
 	comments: Content -> Comment, 	// content's attached comments
 	tags: Content -> Tag,			// tags in the content
@@ -219,6 +219,7 @@ pred contentInvariant [c: Content, n: Nicebook] {
 	// the content belongs to only one user
 //	one u: User | c in n.own[u] #[MODIFY]
 	one n.own.c
+	c not in c.attachedTo
 }
 
 // add a tag to a note or photo
@@ -355,7 +356,6 @@ assert NoPrivacyViolation {
 //check removeTagPreservesInvariant for 7
 
 pred invariants [n: Nicebook] {
-
 	tagInvariant[n]
 	wallInvariant[n]
 	userInvariant[n]
