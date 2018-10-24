@@ -18,16 +18,16 @@ sig Nicebook {
 
 	users: User,					// registered users
 
-	friends: User -> User,			// friends of a user
-	walls: User -> one Wall, 			// user's wall
-	own: User -> Content,			// content uploaded by the user
+	friends: users -> users,			// friends of a user
+	walls: users -> one Wall, 			// user's wall
+	own: users -> Content,			// content uploaded by the user
 
 	published: Wall -> Content,		// published content on the wall
 	wallPrivacy: Wall -> one PrivacyLevel,	// wall's privacy level
 
 	comments: Content -> Comment, 	// content's attached comments
 	tags: Content -> Tag,			// tags in the content
-	references: Tag -> one User,		// tag reference to an user
+	references: Tag -> one users,		// tag reference to an user
 }
 
 abstract sig PrivacyLevel{}
@@ -210,7 +210,6 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, t : Tag] {
 
 	//u1 is the user who launched the "addTag" action
 	//u2 is the user who is tagged by u1
-	//w is the wall of user u2
 
 	// precondition: 
 	// user who tags another user must be that user's friend, i.e., 
