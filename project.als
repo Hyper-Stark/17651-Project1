@@ -275,8 +275,8 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, w : Wall] {
 }
 
 assert addTagPreservesInvariant {
-	all n, n' : Nicebook, u1,u2 : User, c : Content, w : Wall, t : Tag |
-		invariants[n] and addTagInvariant[n, n', u1, u2, c, w, t] implies
+	all n, n' : Nicebook, u1,u2 : User, c : Content, t : Tag |
+		invariants[n] and addTagInvariant[n, n', u1, u2, c, t] implies
 			invariants[n']
 }
 
