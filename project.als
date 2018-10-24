@@ -255,15 +255,14 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, w : Wall] {
 	// precondition:
 	// content c must be present in tagged user's wall and w is the wall of user u
 	c in w.(n.published) and (w in n.walls[u])
+	(u in n.(own.c)) or (u in ((c.(n.tags)).(n.references)))
 
 	//postcondition:
 	// tag can be removed by owner of the post or tagged person
 	// content is removed from the wall of user and tag is removed from the content
-	((u in n.(own.c)) or (u in ((c.(n.tags)).(n.references))))
-	implies
-	(n'.published = n.published - w->c 
-	and 
-	n'.tags = n.tags - c -> (n.references).u)
+	n'.published = n.published - w->c 
+	n'.tags = n.tags - c -> (n.references).u
+	n'.references = n.references - (n.references).u -> u
 
 	//nothing else changes 
 	n'.users = n.users
