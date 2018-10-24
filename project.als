@@ -217,14 +217,15 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, t : Tag] {
 	(u1 in n.friends[u2])
 	// the content to be tagged must be published on some wall
 	some (n.published).c
+	// only photo and note can be tagged
+	c not in Comment
 	
 	//postcondition:
 	//content is added to the wall of user and tag is added to the content
 	n'.published = n.published + (u2.(n.walls))->c
-	n'.tags = n.tags + c -> t
+	n'.tags = n.tags + (c -> t)
 	n'.references = n.references + (t -> u2)
-	
-	
+
 	// nothing else changes 
 	n'.users = n.users
 	n'.friends = n.friends
