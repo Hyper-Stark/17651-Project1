@@ -27,7 +27,7 @@ sig Nicebook {
 	own: User -> Content,			// content uploaded by the user
 
 	published: Wall -> Content,		// published content on the wall
-	wallPrivacy: Wall -> PrivacyLevel,	// wall's privacy level
+	wallPrivacy: Wall -> one PrivacyLevel,	// wall's privacy level
 
 	comments: Content -> Comment, 	// content's attached comments
 	tags: Content -> Tag,			// tags in the content
