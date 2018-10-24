@@ -246,7 +246,6 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, t : Tag] {
 	n'.own = n.own
 	n'.walls = n.walls
 	n'.comments = n.comments
-	n'.references = n.references
 	n'.wallPrivacy = n.wallPrivacy
 }
 
@@ -260,9 +259,9 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, w : Wall] {
 	//postcondition:
 	// tag can be removed by owner of the post or tagged person
 	// content is removed from the wall of user and tag is removed from the content
-	n'.published = n.published - w->c 
-	n'.tags = n.tags - c -> (n.references).u
-	n'.references = n.references - (n.references).u -> u
+	n'.published = n.published - (w->c)
+	n'.tags = n.tags - (c -> (n.references).u)
+	n'.references = n.references - ((n.references).u -> u)
 
 	//nothing else changes 
 	n'.users = n.users
@@ -270,7 +269,6 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, w : Wall] {
 	n'.own = n.own
 	n'.walls = n.walls
 	n'.comments = n.comments
-	n'.references = n.references
 	n'.wallPrivacy = n.wallPrivacy
 }
 
