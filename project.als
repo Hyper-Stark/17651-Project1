@@ -51,7 +51,7 @@ pred publish [n, n' : Nicebook, u : User, c : Content,
 	c not in n.users.(n.walls).(n.published)
 
 	//if the content c is a new content
-       c not in User.(n.own) 
+       c not in (n.users).(n.own)
 		implies 
 			//we should upload it first
 			n'.own = n.own + (u -> c) and 
@@ -113,7 +113,7 @@ assert unpublishPreserveInv {
 pred upload [n, n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPrivacy: PrivacyLevel] {
 	// precondition
 	// the content doesn't exist
-	c not in n.own[User]
+	c not in n.own[n.users]
 
 	// postcondition
 	// the content belongs to the user
@@ -325,7 +325,7 @@ pred privacyWallContentInvariant[n : Nicebook, w : Wall, c : Content] {
 	n.wallPrivacy[w] = Everyone implies c.ViewPrivacy = PrivacyLevel and c.CommentPrivacy = PrivacyLevel
 }
 pred privacyInvariant[n : Nicebook] {
-    	all c : Content | all u : User | (c.ViewPrivacy = OnlyMe and u != n.own.c implies c not in viewable[n, u]) and
+	all c : Content | all u : n.users | (c.ViewPrivacy = OnlyMe and u != n.own.c implies c not in viewable[n, u]) and
 						     (c.ViewPrivacy = Friends and u not in (n.own.c + n.friends[u]) implies c not in viewable[n, u]) and
 						     (c.ViewPrivacy = FriendsOfFriends and u not in (n.own.c + n.friends[u] + n.friends[n.friends[u]]) implies c not in viewable[n, u])
 }
