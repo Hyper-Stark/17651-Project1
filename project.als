@@ -1,6 +1,5 @@
 // 1. structure of the social network, includes users and friendships
 sig User {}
-sig Tag {}
 sig Wall {}
 
 abstract sig Content {
@@ -207,7 +206,7 @@ assert addCommentPreserveInv {
 
 /////////////// ADD TAG & REMOVE TAG ///////////////
 // add a tag to a note or photo
-pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, t : Tag] {
+pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content] {
 	//u1 is the user who launched the "addTag" action
 	//u2 is the user who is tagged by u1
 	userInScope[n, u1]
@@ -235,13 +234,13 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, t : Tag] {
 	n'.wallPrivacy = n.wallPrivacy
 }
 assert addTagPreservesInvariant {
-	all n, n' : Nicebook, u1,u2 : User, c : Content, t : Tag |
-		invariants[n] and addTagInvariant[n, n', u1, u2, c, t] implies
+	all n, n' : Nicebook, u1,u2 : User, c : Content |
+		invariants[n] and addTagInvariant[n, n', u1, u2, c] implies
 			invariants[n']
 } //check addTagPreservesInvariant for 7
 
 // remove a tag on a note or photo
-pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, t : Tag] {
+pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content] {
 	// precondition:
 	userInScope[n, u]
 	// content c must be present in tagged user's wall 
@@ -264,9 +263,9 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, t : Tag] {
 	n'.wallPrivacy = n.wallPrivacy
 }
 assert removeTagPreservesInvariant {
-	all n, n' : Nicebook, u : User, c : Content, t : Tag |
+	all n, n' : Nicebook, u : User, c : Content |
 		invariants[n] and userInScope[n, u]
-		and removeTagInvariant[n, n', u, c, t]
+		and removeTagInvariant[n, n', u, c]
 		implies invariants[n']
 } //check removeTagPreservesInvariant for 7
 
