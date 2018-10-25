@@ -175,8 +175,10 @@ assert removePreserveInv {
 pred addComment [n, n': Nicebook, u: User, comment: Comment, content: Content] {
 	// precondition
 	userInScope[n, u]
+	// comment not own by any user
+	comment not in n.own[n.users]
 	// the comment doesn't exist
-	comment not in n.comments[content]
+	comment not in n.comments[Content]
 	// authorized to add comment to the content
 	content in commentable[n, u]
 
@@ -305,7 +307,7 @@ fun commentable [n : Nicebook, u : User] : set Content{
 	// return the contents that the user can comment
 	{ c : Content | userInScope[n, u] and (
 				(c.CommentPrivacy = OnlyMe and n.own.c = u) or
-				(c.CommentPrivacy = Friends and u in (n.friends[n.own.c] + n.own.c)  and c in n.published[Wall]) or
+				(c.CommentPrivacy = Friends and u in (n.friends[n.own.c] + n.own.c) and c in n.published[Wall]) or
 				(c.CommentPrivacy = FriendsOfFriends and u in (n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c) and c in n.published[Wall]) or
 				(c.CommentPrivacy = Everyone and c in n.published[Wall])) }
 }
