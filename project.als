@@ -341,6 +341,8 @@ pred contentInvariant [c: Content, n: Nicebook] {
 	one u: n.users | c in n.own[u]
 	// TODO must prevent circular
 	c not in n.comments[c]
+	// the note and its containing photos have same owner
+	(c in Note and c.contains != none) implies (n.own.c = n.own.(c.contains))
 }
 pred wallInvariant[n : Nicebook] {
 	//one n.walls.Wall // this may cause no instance found [TODO]
