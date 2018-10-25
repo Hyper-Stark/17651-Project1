@@ -338,8 +338,7 @@ assert NoPrivacyViolation {
 /////////////// INVARIANTS ///////////////
 pred contentInvariant [c: Content, n: Nicebook] {
 	// the content belongs to only one user
-//	one u: User | c in n.own[u] #[MODIFY]
-	one n.own.c
+	one u: n.users | c in n.own[u]
 	c not in c.attachedTo
 }
 pred wallInvariant[n : Nicebook] {
