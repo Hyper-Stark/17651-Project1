@@ -91,7 +91,7 @@ pred unpublish [n, n' : Nicebook, u : User, c : Content] {
 
        //the user should be a registered user
        u in n.users
-       //the content should owned by the user
+       //the content should be owned by the user
 	c in u.(n.own)
        //the content should has been published
        c in u.(n.walls).(n.published)
@@ -305,6 +305,7 @@ fun commentable [n : Nicebook, u : User] : set Content{
 }
 fun viewable [n : Nicebook, u: User] : set Content{
 	// return the content that can be viewed by the user
+	// TODO also the content unpublished but owned by the user?
 	{ c : n.published[Wall] | (c.ViewPrivacy = OnlyMe and n.own.c = u) or
 			     (c.ViewPrivacy = Friends and u in (n.friends[n.own.c] + n.own.c)) or
 			     (c.ViewPrivacy = FriendsOfFriends and u in (n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c)) or
@@ -343,7 +344,7 @@ pred contentInvariant [c: Content, n: Nicebook] {
 }
 pred wallInvariant[n : Nicebook] {
 	//one n.walls.Wall // this may cause no instance found [TODO]
-	// TODO attached comments will also show on owner's wall
+	// TODO attached comments should not be shown on owner's wall
 	// the content published on someone's wall
 	// should be owned by the user or be tagged
 	all u: n.users | all c: n.published[n.walls[u]] |
