@@ -11,9 +11,7 @@ sig Note extends Content {
 	contains : some Photo
 }
 sig Photo extends Content {}
-sig Comment extends Content {
-	attachedTo: one Content
-}
+sig Comment extends Content {}
 sig Nicebook {
 
 	users: User,					// registered users
@@ -182,7 +180,7 @@ pred addComment [n, n': Nicebook, u: User, comment: Comment, content: Content] {
 	content in commentable[n, u]
 
 	// postcondition
-	comment.attachedTo = content
+	n'.comments = n.comments + (content -> comment)
 	// the comment must belong to the user
 	n'.own = n.own + (u -> comment)
 	// the comment is attached to the content
@@ -196,7 +194,6 @@ pred addComment [n, n': Nicebook, u: User, comment: Comment, content: Content] {
 	n'.walls = n.walls
 	n'.published = n.published
 	n'.wallPrivacy = n.wallPrivacy
-	n'.comments = n.comments
 	n'.tags = n.tags
 	n'.references = n.references
 }
@@ -341,7 +338,8 @@ assert NoPrivacyViolation {
 pred contentInvariant [c: Content, n: Nicebook] {
 	// the content belongs to only one user
 	one u: n.users | c in n.own[u]
-	c not in c.attachedTo
+	// TODO must prevent circular
+	c not in n.comments[c]
 }
 pred wallInvariant[n : Nicebook] {
 	//one n.walls.Wall // this may cause no instance found [TODO]
