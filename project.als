@@ -186,7 +186,7 @@ pred addComment [n, n': Nicebook, u: User, comment: Comment, content: Content] {
 	n'.own = n.own + (u -> comment)
 	// the comment is attached to the content
 	n'.comments = n.comments + (content -> comment)
-	// set comment's privacy
+	// comment's privacy must be same as the attached content
 	comment.ViewPrivacy = content.ViewPrivacy
 	comment.CommentPrivacy = content.CommentPrivacy
 
