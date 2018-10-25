@@ -13,7 +13,7 @@ sig Photo extends Content {}
 sig Comment extends Content {}
 sig Nicebook {
 
-	users: User,					// registered users
+	users: set User,					// registered users
 
 	friends: users -> users,			// friends of a user
 	walls: users -> one Wall, 			// user's wall
