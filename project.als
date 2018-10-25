@@ -55,15 +55,15 @@ pred publish [n, n' : Nicebook, u : User, c : Content,
 	//if the content c is a new content
        c not in User.(n.own) 
 		implies 
-       //we should upload it first
-	n'.own = n.own + (u -> c) and 
-       //and set its viewPrivacy level
-	c.ViewPrivacy = viewPrivacy and
-       //and set its commentPrivacy level
-	c.CommentPrivacy = commentPrivacy
+			//we should upload it first
+			n'.own = n.own + (u -> c) and 
+			//and set its viewPrivacy level
+			c.ViewPrivacy = viewPrivacy and
+			//and set its commentPrivacy level
+			c.CommentPrivacy = commentPrivacy
 		else
-	//otherwise, c is an existing content, then do nothing
-	n'.own = n.own
+			//otherwise, c is an existing content, then do nothing
+			n'.own = n.own
 
 	n'.published = n.published + 
 			//add the content to user self's wall
