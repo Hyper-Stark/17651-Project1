@@ -343,11 +343,12 @@ pred contentInvariant [c: Content, n: Nicebook] {
 	c not in c.attachedTo
 }
 pred wallInvariant[n : Nicebook] {
-	// The user who has a content published on his/her wall should be the owner
-	//or the one that is tagged by this content.
 //	one n.walls.Wall //# this may cause no instance found [MODIFY]
-	all u : User | all c : n.published[n.walls[u]] | all t : n.tags[c] |
-		 u = n.own.c or n.own.c in n.references[t]
+	// TODO attached comments will also show on owner's wall
+	// the content published on someone's wall
+	// should be owned by the user or be tagged
+	all u: n.users | all c: n.published[n.walls[u]] |
+		(c in n.own[u]) or (u in n.references[n.tags[c]])
 }
 pred userInvariant[n: Nicebook] {
 	// a user cannot be his/her own friend
