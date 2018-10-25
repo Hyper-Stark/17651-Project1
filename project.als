@@ -13,17 +13,18 @@ sig Photo extends Content {}
 sig Comment extends Content {}
 sig Nicebook {
 
-	users: set User,					// registered users
+	users: set User,				// registered users
+	contents: set Content,			// contents in Nicebook
 
 	friends: users -> users,			// friends of a user
 	walls: users -> one Wall, 			// user's wall
-	own: users -> Content,			// content uploaded by the user
+	own: users -> contents,			// content uploaded by the user
 
-	published: Wall -> Content,		// published content on the wall
+	published: Wall -> contents,		// published content on the wall
 	wallPrivacy: Wall -> one PrivacyLevel,	// wall's privacy level
 
-	comments: Content -> Comment, 	// content's attached comments
-	tags: Content -> users,			// tags in the content
+	comments: contents -> Comment, 	// content's attached comments
+	tags: contents -> users,			// tags in the content
 }
 
 abstract sig PrivacyLevel{}
@@ -32,12 +33,16 @@ one sig OnlyMe, Friends, FriendsOfFriends, Everyone extends PrivacyLevel{}
 pred userInScope [n: Nicebook, u: User] {
 	u in n.users
 }
+pred contentInScope [n: Nicebook, c: Content] {
+	c in n.contents
+}
 
 /////////////// PUBLISH and UNPUBLISH ///////////////
 // publish a piece of content on a user’s wall. The content may be the existing one. 
 pred publish [n, n' : Nicebook, u : User, c : Content,
 			 viewPrivacy: PrivacyLevel, commentPrivacy: PrivacyLevel] {
 	n'.users = n.users
+	n'.contents = n.contents
 	n'.friends = n.friends
 	n'.walls = n.walls
 	n'.comments = n.comments
@@ -45,7 +50,9 @@ pred publish [n, n' : Nicebook, u : User, c : Content,
 	n'.wallPrivacy = n.wallPrivacy	
 
        //the user should be a registered user
-	userInScope[n, u]
+	// the content should be in nicebook
+	userInScope[n, u] and contentInScope[n, c]
+
 	//the content should not has been published by any user in the nicebook
 	c not in n.users.(n.walls).(n.published)
 
@@ -80,6 +87,7 @@ pred unpublish [n, n' : Nicebook, u : User, c : Content] {
 
 	// only the owner can hide the content on his/her and related user's wall
 	n'.users = n.users
+	n'.contents = n.contents
 	n'.friends = n.friends
 	n'.own = n.own
 	n'.walls = n.walls
@@ -88,7 +96,9 @@ pred unpublish [n, n' : Nicebook, u : User, c : Content] {
 	n'.wallPrivacy = n.wallPrivacy
 
        //the user should be a registered user
-	userInScope[n, u]
+	// the content should be in nicebook
+	userInScope[n, u] and contentInScope[n, c]
+
        //the content should be owned by the user
 	c in u.(n.own)
        //the content should has been published
@@ -102,16 +112,14 @@ pred unpublish [n, n' : Nicebook, u : User, c : Content] {
 }
 assert unpublishPreserveInv {
 	all n, n': Nicebook, u: User, c: Content |
-		invariants[n] and userInScope[n, u]
-		and unpublish[n, n', u, c]
-		implies invariants[n']
+		invariants[n] and unpublish[n, n', u, c] implies invariants[n']
 } //check unpublishPreserveInv
 
 /////////////// UPLOAD and REMOVE ///////////////
 // Upload a piece of content, excluding the attacked comments
 pred upload [n, n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPrivacy: PrivacyLevel] {
 	// precondition
-	userInScope[n, u]
+	userInScope[n, u] and contentInScope[n, c]
 	// the content doesn't exist
 	c not in n.own[n.users]
 
@@ -121,6 +129,7 @@ pred upload [n, n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPriv
 	// set privacy of the content
 	c.ViewPrivacy = vPrivacy
 	c.CommentPrivacy = cPrivacy
+	n'.contents = n.contents + c
 
 	n'.users = n.users
 	n'.friends = n.friends
@@ -133,15 +142,14 @@ pred upload [n, n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPriv
 assert uploadPreserveInv {
 	all n, n': Nicebook, u: User, c: Content,
 		vPrivacy: PrivacyLevel, cPrivacy:  PrivacyLevel |
-			invariants[n] and userInScope[n, u]
-			and upload[n, n', u, c, vPrivacy, cPrivacy]
+			invariants[n] and upload[n, n', u, c, vPrivacy, cPrivacy]
 			implies invariants[n']
 } //check uploadPreserveInv
 
 // Remove an existing piece of content from a user’s account.
 pred remove [n, n': Nicebook, u: User, c: Content] {
 	// precondition
-	userInScope[n, u]
+	userInScope[n, u] and contentInScope[n, c]
 	// the content must belong to the user
 	c in n.own[u]
 
@@ -156,6 +164,7 @@ pred remove [n, n': Nicebook, u: User, c: Content] {
 	//c in Note implies remove[n, n', u, c.contains]
 	// remove tags of the content
 	n'.tags = n.tags - (c -> n.tags[c])
+	n'.contents = n.contents - c
 
 	n'.users = n.users
 	n'.friends = n.friends
@@ -164,20 +173,19 @@ pred remove [n, n': Nicebook, u: User, c: Content] {
 }
 assert removePreserveInv {
 	all n, n': Nicebook, u: User, c: Content |
-		invariants[n] and userInScope[n, u]
-		and remove[n, n', u, c] implies invariants[n']
+		invariants[n] and remove[n, n', u, c] implies invariants[n']
 } //check removePreserveInv for 10
-
 
 /////////////// ADD COMMENT ///////////////
 // Add a comment to a content.
 pred addComment [n, n': Nicebook, u: User, comment: Comment, content: Content] {
 	// precondition
-	userInScope[n, u]
+	userInScope[n, u] and contentInScope[n, comment] and
+	contentInScope[n, content]
 	// comment not own by any user
 	comment not in n.own[n.users]
 	// the comment doesn't exist
-	comment not in n.comments[Content]
+	comment not in n.comments[n.contents]
 	// authorized to add comment to the content
 	content in commentable[n, u]
 
@@ -190,6 +198,7 @@ pred addComment [n, n': Nicebook, u: User, comment: Comment, content: Content] {
 	// comment's privacy must be same as the attached content
 	comment.ViewPrivacy = content.ViewPrivacy
 	comment.CommentPrivacy = content.CommentPrivacy
+	n'.contents = n.contents + comment
 
 	n'.users = n.users
 	n'.friends = n.friends
@@ -200,8 +209,7 @@ pred addComment [n, n': Nicebook, u: User, comment: Comment, content: Content] {
 }
 assert addCommentPreserveInv {
 	all n, n': Nicebook, u: User, c: Content , comment: Comment| 
-		invariants[n] and userInScope[n, u]
-		and addComment[n, n', u, comment, c]
+		invariants[n] and addComment[n, n', u, comment, c]
 		implies invariants[n']
 } //check addCommentPreserveInv for 10
 
@@ -210,8 +218,8 @@ assert addCommentPreserveInv {
 pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content] {
 	//u1 is the user who launched the "addTag" action
 	//u2 is the user who is tagged by u1
-	userInScope[n, u1]
-	userInScope[n, u2]
+	userInScope[n, u1] and userInScope[n, u2] and
+	contentInScope[n, c]
 	// precondition: 
 	// user who tags another user must be that user's friend, i.e., 
 	// u1 should be a friend of u2(tagged user)
@@ -228,6 +236,7 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content] {
 
 	// nothing else changes 
 	n'.users = n.users
+	n'.contents = n.contents
 	n'.friends = n.friends
 	n'.own = n.own
 	n'.walls = n.walls
@@ -243,7 +252,7 @@ assert addTagPreservesInvariant {
 // remove a tag on a note or photo
 pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content] {
 	// precondition:
-	userInScope[n, u]
+	userInScope[n, u] and contentInScope[n, c]
 	// content c must be present in tagged user's wall 
 	c in ((u.(n.walls)). (n.published))
 	// content is removed from the wall of user and tag is removed from the content
@@ -257,6 +266,7 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content] {
 
 	//nothing else changes 
 	n'.users = n.users
+	n'.contents = n.contents
 	n'.friends = n.friends
 	n'.own = n.own
 	n'.walls = n.walls
@@ -265,15 +275,14 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content] {
 }
 assert removeTagPreservesInvariant {
 	all n, n' : Nicebook, u : User, c : Content |
-		invariants[n] and userInScope[n, u]
-		and removeTagInvariant[n, n', u, c]
+		invariants[n] and removeTagInvariant[n, n', u, c]
 		implies invariants[n']
 } //check removeTagPreservesInvariant for 7
 
 /////////////// PRIVACY ///////////////
 pred setContentPrivacy[n : Nicebook, u : User, c : Content, p : PrivacyLevel] {
 	// precondition
-	userInScope[n, u]
+	userInScope[n, u] and contentInScope[n, c]
 	// only the content's owner can change its viewPrivacy
 	(u -> c) in n.own
 	// postcondition
@@ -282,13 +291,13 @@ pred setContentPrivacy[n : Nicebook, u : User, c : Content, p : PrivacyLevel] {
 }
 assert setContentPrivacyPreservesInvariant {
 	all n, n' : Nicebook, u : User, c : Content, p : PrivacyLevel |
-		invariants[n] and userInScope[n, u]
-		and setContentPrivacy[n, u, c, p]
+		invariants[n] and setContentPrivacy[n, u, c, p]
 		implies invariants[n']
 } //check setContentPrivacyPreservesInvariant for 7
 
 pred setCommentPrivacy[n : Nicebook, u : User, c : Content, p : PrivacyLevel] {
 	// precondition
+	userInScope[n, u] and contentInScope[n, c]
 	// only the content's owner can change its commentPrivacy
 	(u -> c) in n.own
 	// postcondition
@@ -297,14 +306,13 @@ pred setCommentPrivacy[n : Nicebook, u : User, c : Content, p : PrivacyLevel] {
 }
 assert setCommentPrivacyPreservesInvariant {
 	all n, n' : Nicebook, u : User, c : Content, p : PrivacyLevel |
-		invariants[n] and userInScope[n, u]
-		and setCommentPrivacy[n, u, c, p]
+		invariants[n] and setCommentPrivacy[n, u, c, p]
 		implies invariants[n']
 } //check setCommentPrivacyPreservesInvariant for 7
 
 fun commentable [n : Nicebook, u : User] : set Content{
 	// return the contents that the user can comment
-	{ c : Content | userInScope[n, u] and (
+	{ c : n.contents | userInScope[n, u] and (
 				(c.CommentPrivacy = OnlyMe and n.own.c = u) or
 				(c.CommentPrivacy = Friends and u in (n.friends[n.own.c] + n.own.c) and c in n.published[Wall]) or
 				(c.CommentPrivacy = FriendsOfFriends and u in (n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c) and c in n.published[Wall]) or
@@ -313,7 +321,7 @@ fun commentable [n : Nicebook, u : User] : set Content{
 fun viewable [n : Nicebook, u: User] : set Content{
 	// return the content that can be viewed by the user
 	// TODO also the content unpublished but owned by the user?
-	{ c : Content | userInScope[n, u] and (
+	{ c : n.contents | userInScope[n, u] and (
 		(c.ViewPrivacy = OnlyMe and n.own.c = u) or
 		(c.ViewPrivacy = Friends and u in (n.friends[n.own.c] + n.own.c) and c in n.published[Wall]) or
 		(c.ViewPrivacy = FriendsOfFriends and u in (n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c) and c in n.published[Wall]) or
@@ -333,7 +341,7 @@ pred privacyWallContentInvariant[n : Nicebook, w : Wall, c : Content] {
 	n.wallPrivacy[w] = Everyone implies c.ViewPrivacy = PrivacyLevel and c.CommentPrivacy = PrivacyLevel
 }
 pred privacyInvariant[n : Nicebook] {
-	all c : Content | all u : n.users | (c.ViewPrivacy = OnlyMe and u != n.own.c implies c not in viewable[n, u]) and
+	all c : n.contents | all u : n.users | (c.ViewPrivacy = OnlyMe and u != n.own.c implies c not in viewable[n, u]) and
 						     (c.ViewPrivacy = Friends and u not in (n.own.c + n.friends[u]) implies c not in viewable[n, u]) and
 						     (c.ViewPrivacy = FriendsOfFriends and u not in (n.own.c + n.friends[u] + n.friends[n.friends[u]]) implies c not in viewable[n, u])
 }
@@ -352,7 +360,7 @@ pred contentInvariant [c: Content, n: Nicebook] {
 	// the note and its containing photos have same owner
 	(c in Note and c.contains != none) implies (n.own.c = n.own.(c.contains))
 	// an attached comment can only be attached to 1 content
-	(c in n.comments[Content]) implies (one n.comments.c)
+	(c in n.comments[n.contents]) implies (one n.comments.c)
 }
 pred wallInvariant[n : Nicebook] {
 	// every user has a wall
@@ -384,8 +392,8 @@ pred invariants [n: Nicebook] {
 	privacyInvariant[n]
 	publishInvariant[n]
 
-	all c: Content | contentInvariant[c, n]
-	all w : Wall, c : Content | privacyWallContentInvariant[n, w, c]
+	all c: n.contents | contentInvariant[c, n]
+	all w : Wall, c : n.contents | privacyWallContentInvariant[n, w, c]
 }
 
 run {
