@@ -152,9 +152,8 @@ pred remove [n, n': Nicebook, u: User, c: Content] {
 	n'.published = n.published - (n.walls[u + n.tags[c]] -> c)
 	// remove the attached comments
 	n'.comments = n.comments - (c -> n.comments[c])
-	// TODO should attached comments do: remove[n.comments[c]]?
-	// photos contained by the note should also be removed
-	c in Note implies remove[n, n', u, c.contains]
+	// TODO photos contained by the note should also be removed
+	//c in Note implies remove[n, n', u, c.contains]
 	// remove tags of the content
 	n'.tags = n.tags - (c -> n.tags[c])
 
