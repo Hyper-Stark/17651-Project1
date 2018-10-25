@@ -367,8 +367,7 @@ pred userInvariant[n: Nicebook] {
 }
 pred tagInvariant [n: Nicebook] {
 	// the tag cannot be attached to comment
-//	no t: Tag | t in n.tags[Comment] #[MODIFY]
-//	no Comment.(n.tags)
+	no u: n.users | u in n.tags[Comment]
 }
 
 pred invariants [n: Nicebook] {
