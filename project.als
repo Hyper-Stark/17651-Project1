@@ -352,6 +352,10 @@ pred contentInvariant [c: Content, n: Nicebook] {
 	(c in Note and c.contains != none) implies (n.own.c = n.own.(c.contains))
 }
 pred wallInvariant[n : Nicebook] {
+	// every user has a wall
+	all u: n.users | one n.walls[u]
+	// different users have different walls
+	all u1, u2: n.users | (u1 != u2) iff (n.walls[u1] != n.walls[u2])
 	//one n.walls.Wall // this may cause no instance found [TODO]
 	// TODO attached comments should not be shown on owner's wall
 	// the content published on someone's wall
