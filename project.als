@@ -111,7 +111,7 @@ assert unpublishPreserveInv {
 // Upload a piece of content, excluding the attacked comments
 pred upload [n, n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPrivacy: PrivacyLevel] {
 	// precondition
-	userInScope[n, u]
+	[n, u]
 	// the content doesn't exist
 	c not in n.own[n.users]
 
@@ -312,11 +312,11 @@ fun commentable [n : Nicebook, u : User] : set Content{
 fun viewable [n : Nicebook, u: User] : set Content{
 	// return the content that can be viewed by the user
 	// TODO also the content unpublished but owned by the user?
-	{ c : n.published[Wall] | userInScope[n, u] and (
-				(c.ViewPrivacy = OnlyMe and n.own.c = u) or
-				(c.ViewPrivacy = Friends and u in (n.friends[n.own.c] + n.own.c)) or
-				(c.ViewPrivacy = FriendsOfFriends and u in (n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c)) or
-				(c.ViewPrivacy = Everyone)) }
+	{ c | userInScope[n, u] and (
+		(c.ViewPrivacy = OnlyMe and n.own.c = u) or
+		(c.ViewPrivacy = Friends and u in (n.friends[n.own.c] + n.own.c) and c in n.published[Wall]) or
+		(c.ViewPrivacy = FriendsOfFriends and u in (n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c) and c in n.published[Wall]) or
+		(c.ViewPrivacy = Everyone and c in n.published[Wall])) }
 }
 
 pred publishInvariant[n : Nicebook] {
