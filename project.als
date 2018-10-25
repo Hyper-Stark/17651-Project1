@@ -1,6 +1,5 @@
 // 1. structure of the social network, includes users and friendships
 sig User {}
-sig Tag {}
 sig Wall {}
 
 abstract sig Content {
@@ -24,8 +23,7 @@ sig Nicebook {
 	wallPrivacy: Wall -> one PrivacyLevel,	// wall's privacy level
 
 	comments: Content -> Comment, 	// content's attached comments
-	tags: Content -> Tag,			// tags in the content
-	references: Tag -> one users,		// tag reference to an user
+	tags: Content -> users,			// tags in the content
 }
 
 abstract sig PrivacyLevel{}
@@ -42,7 +40,6 @@ pred publish [n, n' : Nicebook, u : User, c : Content,
 	n'.walls = n.walls
 	n'.comments = n.comments
 	n'.tags = n.tags
-	n'.references = n.references
 	n'.wallPrivacy = n.wallPrivacy	
 
        //the user should be a registered user
@@ -67,7 +64,7 @@ pred publish [n, n' : Nicebook, u : User, c : Content,
 			//add the content to user self's wall
 			(u.(n.walls) -> c) + 
 			//add the content to all taged users' wall
-			(c.(n.tags).(n.references).(n.walls) -> c)
+			(n.walls[n.tags[c]] -> c)
 }
 assert publishPreserveInv {
 	all n, n': Nicebook, u: User, c: Content,
@@ -86,7 +83,6 @@ pred unpublish [n, n' : Nicebook, u : User, c : Content] {
 	n'.walls = n.walls
 	n'.comments = n.comments
 	n'.tags = n.tags
-	n'.references = n.references
 	n'.wallPrivacy = n.wallPrivacy
 
        //the user should be a registered user
@@ -100,7 +96,7 @@ pred unpublish [n, n' : Nicebook, u : User, c : Content] {
                             //remove the content from user self's wall
 				(u.(n.walls) -> c) - 
                             //remove the content from all taged users' wall
-				(c.(n.tags).(n.references).(n.walls) -> c)
+				(n.walls[n.tags[c]] -> c)
 }
 assert unpublishPreserveInv {
 	all n, n': Nicebook, u: User, c: Content |
@@ -129,7 +125,6 @@ pred upload [n, n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPriv
 	n'.wallPrivacy = n.wallPrivacy
 	n'.comments = n.comments
 	n'.tags = n.tags
-	n'.references = n.references
 }
 assert uploadPreserveInv {
 	all n, n': Nicebook, u: User, c: Content,
@@ -148,7 +143,7 @@ pred remove [n, n': Nicebook, u: User, c: Content] {
 	// remove the content form the user
 	n'.own = n.own - (u -> c)
 	// remove from owner's and tagged users' published
-	n'.published = n.published - (n.walls[u + n.references[n.tags[c]]]  -> c)
+	n'.published = n.published - (n.walls[u + n.tags[c]] -> c)
 	// remove the attached comments
 	n'.comments = n.comments - (c -> n.comments[c])
 	// TODO should attached comments do: remove[n.comments[c]]?
@@ -156,8 +151,6 @@ pred remove [n, n': Nicebook, u: User, c: Content] {
 	c in Note implies remove[n, n', u, c.contains]
 	// remove tags of the content
 	n'.tags = n.tags - (c -> n.tags[c])
-	// remove references from tags
-	n'.references = n.references - (n.tags[c] -> n.references[n.tags[c]])
 
 	n'.users = n.users
 	n'.friends = n.friends
@@ -195,7 +188,6 @@ pred addComment [n, n': Nicebook, u: User, comment: Comment, content: Content] {
 	n'.published = n.published
 	n'.wallPrivacy = n.wallPrivacy
 	n'.tags = n.tags
-	n'.references = n.references
 }
 assert addCommentPreserveInv {
 	all n, n': Nicebook, u: User, c: Content , comment: Comment| 
@@ -204,8 +196,7 @@ assert addCommentPreserveInv {
 
 /////////////// ADD TAG & REMOVE TAG ///////////////
 // add a tag to a note or photo
-pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, t : Tag] {
-
+pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content] {
 	//u1 is the user who launched the "addTag" action
 	//u2 is the user who is tagged by u1
 
@@ -221,8 +212,7 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, t : Tag] {
 	//postcondition:
 	//content is added to the wall of user and tag is added to the content
 	n'.published = n.published + (u2.(n.walls))->c
-	n'.tags = n.tags + (c -> t)
-	n'.references = n.references + (t -> u2)
+	n'.tags = n.tags + (c -> u2)
 
 	// nothing else changes 
 	n'.users = n.users
@@ -233,25 +223,24 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, t : Tag] {
 	n'.wallPrivacy = n.wallPrivacy
 }
 assert addTagPreservesInvariant {
-	all n, n' : Nicebook, u1,u2 : User, c : Content, t : Tag |
-		invariants[n] and addTagInvariant[n, n', u1, u2, c, t] implies
+	all n, n' : Nicebook, u1,u2 : User, c : Content |
+		invariants[n] and addTagInvariant[n, n', u1, u2, c] implies
 			invariants[n']
 } //check addTagPreservesInvariant for 7
 
 // remove a tag on a note or photo
-pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, t : Tag] {
+pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content] {
 	// precondition:
 	// content c must be present in tagged user's wall 
 	c in ((u.(n.walls)). (n.published))
 	// content is removed from the wall of user and tag is removed from the content
-	(u in n.(own.c)) or (u in (t.(n.references)))
+	(u in n.(own.c)) or (u in n.tags[c])
 
 	//postcondition:
 	// tag can be removed by owner of the post or tagged person
 	
 	n'.published = n.published - (u.(n.walls))->c  
-	n'.tags = n.tags - (c -> t) 
-	n'.references = n.references - (t -> u)
+	n'.tags = n.tags - (c -> u)
 
 	//nothing else changes 
 	n'.users = n.users
@@ -262,8 +251,8 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, t : Tag] {
 	n'.wallPrivacy = n.wallPrivacy
 }
 assert removeTagPreservesInvariant {
-	all n, n' : Nicebook, u : User, c : Content, t : Tag |
-		invariants[n] and removeTagInvariant[n, n', u, c, t] implies
+	all n, n' : Nicebook, u : User, c : Content |
+		invariants[n] and removeTagInvariant[n, n', u, c] implies
 			invariants[n']
 } //check removeTagPreservesInvariant for 7
 
@@ -350,7 +339,7 @@ pred wallInvariant[n : Nicebook] {
 	// the content published on someone's wall
 	// should be owned by the user or be tagged
 	all u: n.users | all c: n.published[n.walls[u]] |
-		(c in n.own[u]) or (u in n.references[n.tags[c]])
+		(c in n.own[u]) or (u in n.tags[c])
 }
 pred userInvariant[n: Nicebook] {
 	// a user cannot be his/her own friend
@@ -360,8 +349,7 @@ pred userInvariant[n: Nicebook] {
 }
 pred tagInvariant [n: Nicebook] {
 	// the tag cannot be attached to comment
-//	no t: Tag | t in n.tags[Comment] #[MODIFY]
-//	no Comment.(n.tags)
+	no u: n.users | u in n.tags[Comment]
 }
 
 pred invariants [n: Nicebook] {
