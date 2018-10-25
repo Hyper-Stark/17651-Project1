@@ -224,7 +224,7 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, t : Tag] {
 	//postcondition:
 	//content is added to the wall of user and tag is added to the content
 	n'.published = n.published + (u2.(n.walls))->c
-	n'.tags = n.tags + (c -> t)
+	n'.tags = n.tags + (c -> u2)
 
 	// nothing else changes 
 	n'.users = n.users
@@ -253,7 +253,7 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, t : Tag] {
 	// tag can be removed by owner of the post or tagged person
 	
 	n'.published = n.published - (u.(n.walls))->c  
-	n'.tags = n.tags - (c -> t) 
+	n'.tags = n.tags - (c -> u)
 
 	//nothing else changes 
 	n'.users = n.users
