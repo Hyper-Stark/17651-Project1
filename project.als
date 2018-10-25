@@ -350,6 +350,8 @@ pred contentInvariant [c: Content, n: Nicebook] {
 	c not in n.comments[c]
 	// the note and its containing photos have same owner
 	(c in Note and c.contains != none) implies (n.own.c = n.own.(c.contains))
+	// an attached comment can only be attached to 1 content
+	(c in n.comments[Content]) implies (one n.comments.c)
 }
 pred wallInvariant[n : Nicebook] {
 	// every user has a wall
