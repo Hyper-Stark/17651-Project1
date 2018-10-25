@@ -315,6 +315,7 @@ fun viewable [n : Nicebook, u: User] : set Content{
 }
 
 pred publishInvariant[n : Nicebook] {
+	// TODO it's weird that unpublished content but also owned by the user cannot see it
 	all u : n.users | (n.own[u] - n.published[n.walls[u]]) not in viewable[n, u]
 }
 
@@ -343,7 +344,7 @@ pred contentInvariant [c: Content, n: Nicebook] {
 	c not in c.attachedTo
 }
 pred wallInvariant[n : Nicebook] {
-//	one n.walls.Wall //# this may cause no instance found [MODIFY]
+	//one n.walls.Wall // this may cause no instance found [TODO]
 	// TODO attached comments will also show on owner's wall
 	// the content published on someone's wall
 	// should be owned by the user or be tagged
