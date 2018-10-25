@@ -31,12 +31,14 @@ sig Nicebook {
 abstract sig PrivacyLevel{}
 one sig OnlyMe, Friends, FriendsOfFriends, Everyone extends PrivacyLevel{}
 
+pred userInScope [n: Nicebook, u: User] {
+	u in n.users
+}
 
 /////////////// PUBLISH and UNPUBLISH ///////////////
 // publish a piece of content on a user’s wall. The content may be the existing one. 
 pred publish [n, n' : Nicebook, u : User, c : Content,
 			 viewPrivacy: PrivacyLevel, commentPrivacy: PrivacyLevel] {
-
 	n'.users = n.users
 	n'.friends = n.friends
 	n'.walls = n.walls
@@ -46,7 +48,7 @@ pred publish [n, n' : Nicebook, u : User, c : Content,
 	n'.wallPrivacy = n.wallPrivacy	
 
        //the user should be a registered user
-	u in n.users
+	userInScope[n, u]
 	//the content should not has been published by any user in the nicebook
 	c not in n.users.(n.walls).(n.published)
 
@@ -90,7 +92,7 @@ pred unpublish [n, n' : Nicebook, u : User, c : Content] {
 	n'.wallPrivacy = n.wallPrivacy
 
        //the user should be a registered user
-       u in n.users
+	userInScope[n, u]
        //the content should be owned by the user
 	c in u.(n.own)
        //the content should has been published
@@ -104,7 +106,8 @@ pred unpublish [n, n' : Nicebook, u : User, c : Content] {
 }
 assert unpublishPreserveInv {
 	all n, n': Nicebook, u: User, c: Content |
-		invariants[n] and unpublish[n, n', u, c]
+		invariants[n] and userInScope[n, u]
+		and unpublish[n, n', u, c]
 		implies invariants[n']
 } //check unpublishPreserveInv
 
@@ -112,6 +115,7 @@ assert unpublishPreserveInv {
 // Upload a piece of content, excluding the attacked comments
 pred upload [n, n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPrivacy: PrivacyLevel] {
 	// precondition
+	userInScope[n, u]
 	// the content doesn't exist
 	c not in n.own[n.users]
 
@@ -134,13 +138,15 @@ pred upload [n, n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPriv
 assert uploadPreserveInv {
 	all n, n': Nicebook, u: User, c: Content,
 		vPrivacy: PrivacyLevel, cPrivacy:  PrivacyLevel |
-			invariants[n] and upload[n, n', u, c, vPrivacy, cPrivacy]
+			invariants[n] and userInScope[n, u]
+			and upload[n, n', u, c, vPrivacy, cPrivacy]
 			implies invariants[n']
 } //check uploadPreserveInv
 
 // Remove an existing piece of content from a user’s account.
 pred remove [n, n': Nicebook, u: User, c: Content] {
 	// precondition
+	userInScope[n, u]
 	// the content must belong to the user
 	c in n.own[u]
 
@@ -166,7 +172,8 @@ pred remove [n, n': Nicebook, u: User, c: Content] {
 }
 assert removePreserveInv {
 	all n, n': Nicebook, u: User, c: Content |
-		invariants[n] and remove[n, n', u, c] implies invariants[n']
+		invariants[n] and userInScope[n, u]
+		and remove[n, n', u, c] implies invariants[n']
 } //check removePreserveInv for 10
 
 
@@ -174,6 +181,7 @@ assert removePreserveInv {
 // Add a comment to a content.
 pred addComment [n, n': Nicebook, u: User, comment: Comment, content: Content] {
 	// precondition
+	userInScope[n, u]
 	// the comment doesn't exist
 	comment not in n.comments[content]
 	// authorized to add comment to the content
@@ -199,16 +207,18 @@ pred addComment [n, n': Nicebook, u: User, comment: Comment, content: Content] {
 }
 assert addCommentPreserveInv {
 	all n, n': Nicebook, u: User, c: Content , comment: Comment| 
-		invariants[n] and addComment[n, n', u, comment, c] implies invariants[n']
+		invariants[n] and userInScope[n, u]
+		and addComment[n, n', u, comment, c]
+		implies invariants[n']
 } //check addCommentPreserveInv for 10
 
 /////////////// ADD TAG & REMOVE TAG ///////////////
 // add a tag to a note or photo
 pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content, t : Tag] {
-
 	//u1 is the user who launched the "addTag" action
 	//u2 is the user who is tagged by u1
-
+	userInScope[n, u1]
+	userInScope[n, u2]
 	// precondition: 
 	// user who tags another user must be that user's friend, i.e., 
 	// u1 should be a friend of u2(tagged user)
@@ -241,6 +251,7 @@ assert addTagPreservesInvariant {
 // remove a tag on a note or photo
 pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, t : Tag] {
 	// precondition:
+	userInScope[n, u]
 	// content c must be present in tagged user's wall 
 	c in ((u.(n.walls)). (n.published))
 	// content is removed from the wall of user and tag is removed from the content
@@ -263,13 +274,15 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content, t : Tag] {
 }
 assert removeTagPreservesInvariant {
 	all n, n' : Nicebook, u : User, c : Content, t : Tag |
-		invariants[n] and removeTagInvariant[n, n', u, c, t] implies
-			invariants[n']
+		invariants[n] and userInScope[n, u]
+		and removeTagInvariant[n, n', u, c, t]
+		implies invariants[n']
 } //check removeTagPreservesInvariant for 7
 
 /////////////// PRIVACY ///////////////
 pred setContentPrivacy[n : Nicebook, u : User, c : Content, p : PrivacyLevel] {
 	// precondition
+	userInScope[n, u]
 	// only the content's owner can change its viewPrivacy
 	(u -> c) in n.own
 	// postcondition
@@ -278,8 +291,9 @@ pred setContentPrivacy[n : Nicebook, u : User, c : Content, p : PrivacyLevel] {
 }
 assert setContentPrivacyPreservesInvariant {
 	all n, n' : Nicebook, u : User, c : Content, p : PrivacyLevel |
-		invariants[n] and setContentPrivacy[n, u, c, p] implies
-			invariants[n']
+		invariants[n] and userInScope[n, u]
+		and setContentPrivacy[n, u, c, p]
+		implies invariants[n']
 } //check setContentPrivacyPreservesInvariant for 7
 
 pred setCommentPrivacy[n : Nicebook, u : User, c : Content, p : PrivacyLevel] {
@@ -292,24 +306,27 @@ pred setCommentPrivacy[n : Nicebook, u : User, c : Content, p : PrivacyLevel] {
 }
 assert setCommentPrivacyPreservesInvariant {
 	all n, n' : Nicebook, u : User, c : Content, p : PrivacyLevel |
-		invariants[n] and setCommentPrivacy[n, u, c, p] implies
-			invariants[n']
+		invariants[n] and userInScope[n, u]
+		and setCommentPrivacy[n, u, c, p]
+		implies invariants[n']
 } //check setCommentPrivacyPreservesInvariant for 7
 
 fun commentable [n : Nicebook, u : User] : set Content{
 	// return the contents that the user can comment
-	{ c : Content | (c.CommentPrivacy = OnlyMe and n.own.c = u) or
-			     (c.CommentPrivacy = Friends and u in (n.friends[n.own.c] + n.own.c)) or
-			     (c.CommentPrivacy = FriendsOfFriends and u in (n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c)) or
-			     (c.CommentPrivacy = Everyone) }	
+	{ c : Content | userInScope[n, u] and (
+				(c.CommentPrivacy = OnlyMe and n.own.c = u) or
+				(c.CommentPrivacy = Friends and u in (n.friends[n.own.c] + n.own.c)) or
+				(c.CommentPrivacy = FriendsOfFriends and u in (n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c)) or
+				(c.CommentPrivacy = Everyone)) }
 }
 fun viewable [n : Nicebook, u: User] : set Content{
 	// return the content that can be viewed by the user
 	// TODO also the content unpublished but owned by the user?
-	{ c : n.published[Wall] | (c.ViewPrivacy = OnlyMe and n.own.c = u) or
-			     (c.ViewPrivacy = Friends and u in (n.friends[n.own.c] + n.own.c)) or
-			     (c.ViewPrivacy = FriendsOfFriends and u in (n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c)) or
-			     (c.ViewPrivacy = Everyone) }
+	{ c : n.published[Wall] | userInScope[n, u] and (
+				(c.ViewPrivacy = OnlyMe and n.own.c = u) or
+				(c.ViewPrivacy = Friends and u in (n.friends[n.own.c] + n.own.c)) or
+				(c.ViewPrivacy = FriendsOfFriends and u in (n.friends[n.friends[n.own.c]] + n.friends[n.own.c] + n.own.c)) or
+				(c.ViewPrivacy = Everyone)) }
 }
 
 pred publishInvariant[n : Nicebook] {
