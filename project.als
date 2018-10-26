@@ -374,8 +374,8 @@ assert NoPrivacyViolation {
 pred contentInvariant [c: Content, n: Nicebook] {
 	// the content belongs to only one user
 	one u: n.users | c in n.own[u]
-	// TODO must prevent circular
-	c not in n.comments[c]
+	// preventing comment circularity
+	c not in c.^(n.comments)
 	// the note and its containing photos have same owner
 	(c in Note and c.contains != none) implies (n.own.c = n.own.(c.contains))
 	// an attached comment can only be attached to 1 content
