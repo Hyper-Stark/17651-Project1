@@ -1,3 +1,11 @@
+/*
+ * Team Member 7:
+ * 1) Jhao-Ting Chen
+ * 2) Liwen Feng
+ * 3) Rishabh Panwar
+ * 4) Li Zhang
+ */
+
 // 1. structure of the social network, includes users and friendships
 sig User {}
 sig Wall {}
@@ -47,7 +55,10 @@ pred publish [n, n' : Nicebook, u : User, c : Content,
 	n'.walls = n.walls
 	n'.comments = n.comments
 	n'.tags = n.tags
-	n'.wallPrivacy = n.wallPrivacy	
+	n'.wallPrivacy = n.wallPrivacy
+	//precondition
+	c.ViewPrivacy = viewPrivacy
+	c.CommentPrivacy = commentPrivacy
 
        //the user should be a registered user
 	// the content should be in nicebook
@@ -62,11 +73,7 @@ pred publish [n, n' : Nicebook, u : User, c : Content,
 			//we should upload it first
 			n'.contents = n.contents  + c and
 			//then update the relation between user to content
-			n'.own = n.own + (u -> c) and 
-			//and set its viewPrivacy level
-			c.ViewPrivacy = viewPrivacy and
-			//and set its commentPrivacy level
-			c.CommentPrivacy = commentPrivacy
+			n'.own = n.own + (u -> c)
 		else
 			//otherwise do not update the contents set
 			n'.contents = n.contents
@@ -124,6 +131,8 @@ assert unpublishPreserveInv {
 // Upload a piece of content, excluding the attached comments
 pred upload [n, n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPrivacy: PrivacyLevel] {
 	// precondition
+	c.ViewPrivacy = vPrivacy
+	c.CommentPrivacy = cPrivacy
 	userInScope[n, u] and contentInScope[n, c]
 	// the content doesn't exist
 	c not in n.own[n.users]
@@ -131,9 +140,6 @@ pred upload [n, n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPriv
 	// postcondition
 	// the content belongs to the user
 	n'.own = n.own + (u -> c)
-	// set privacy of the content
-	c.ViewPrivacy = vPrivacy
-	c.CommentPrivacy = cPrivacy
 	n'.contents = n.contents + c
 
 	n'.users = n.users
