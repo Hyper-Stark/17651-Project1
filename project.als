@@ -82,7 +82,7 @@ pred publish [n, n' : Nicebook, u : User, c : Content,
     c not in n.users.(n.walls).(n.published)
     
     //if the content c is a new content
-    c not in n.contents
+    c not in (n.users).(n.own)
         implies 
             //we should upload it first
             n'.contents = n.contents  + c and
@@ -133,7 +133,7 @@ pred unpublish [n, n' : Nicebook, u : User, c : Content] {
     userInScope[n, u] and contentInScope[n, c]
     
     //the content should be owned by the user
-	c in u.(n.own)
+    c in u.(n.own)
     //the content should has been published
     c in u.(n.walls).(n.published)
 
