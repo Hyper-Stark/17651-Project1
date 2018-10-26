@@ -164,7 +164,7 @@ pred remove [n, n': Nicebook, u: User, c: Content] {
 	//c in Note implies remove[n, n', u, c.contains]
 	// remove tags of the content
 	n'.tags = n.tags - (c -> n.tags[c])
-	n'.contents = n.contents - c
+	n'.contents = n.contents - c - n.comments[c]
 
 	n'.users = n.users
 	n'.friends = n.friends
