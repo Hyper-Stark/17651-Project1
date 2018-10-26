@@ -365,10 +365,10 @@ pred CommentPrivacyInvariant[n : Nicebook] {
 						     (c.CommentPrivacy = FriendsOfFriends and u not in (n.own.c + n.friends[u] + n.friends[n.friends[u]]) implies c not in commentable[n, u])
 }
 
-assert NoPrivacyViolation {
-	// violation occurs if a user is able to see content not in `viewable`
-	all n : Nicebook | publishInvariant[n] and ViewPrivacyInvariant[n] and CommentPrivacyInvariant[n]
-} check NoPrivacyViolation
+//assert NoPrivacyViolation {
+//	// violation occurs if a user is able to see content not in `viewable`
+//	all n : Nicebook | publishInvariant[n] and ViewPrivacyInvariant[n] and CommentPrivacyInvariant[n]
+//} check NoPrivacyViolation
 
 /////////////// INVARIANTS ///////////////
 pred contentInvariant [c: Content, n: Nicebook] {
