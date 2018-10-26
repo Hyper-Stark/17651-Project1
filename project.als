@@ -418,4 +418,4 @@ pred invariants [n: Nicebook] {
 
 run {
 	all n: Nicebook | invariants[n]
-} for 3 but exactly 1 Nicebook, exactly 2 User, exactly 5 Content
+} for 3
