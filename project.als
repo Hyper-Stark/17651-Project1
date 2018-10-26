@@ -221,8 +221,9 @@ assert addCommentPreserveInv {
 pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content] {
 	//u1 is the user who launched the "addTag" action
 	//u2 is the user who is tagged by u1
-	userInScope[n, u1] and userInScope[n, u2] and
-	contentInScope[n, c]
+	//both users u1 and u2 are users in nicebook n
+	userInScope[n, u1]
+	userInScope[n, u2]
 	// precondition: 
 	// user who tags another user must be that user's friend, i.e., 
 	// u1 should be a friend of u2(tagged user)
@@ -234,12 +235,11 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content] {
 	
 	//postcondition:
 	//content is added to the wall of user and tag is added to the content
-	n'.published = n.published + (u2.(n.walls))->c
+	n'.published = n.published + u2.(n.walls)->c
 	n'.tags = n.tags + (c -> u2)
 
 	// nothing else changes 
 	n'.users = n.users
-	n'.contents = n.contents
 	n'.friends = n.friends
 	n'.own = n.own
 	n'.walls = n.walls
@@ -250,26 +250,30 @@ assert addTagPreservesInvariant {
 	all n, n' : Nicebook, u1,u2 : User, c : Content |
 		invariants[n] and addTagInvariant[n, n', u1, u2, c] implies
 			invariants[n']
-} //check addTagPreservesInvariant for 7
+} check addTagPreservesInvariant for 7
 
 // remove a tag on a note or photo
 pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content] {
 	// precondition:
-	userInScope[n, u] and contentInScope[n, c]
+	userInScope[n, u]
 	// content c must be present in tagged user's wall 
-	c in ((u.(n.walls)). (n.published))
-	// content is removed from the wall of user and tag is removed from the content
-	(u in n.(own.c)) or (u in n.tags[c])
-
-	//postcondition:
-	// tag can be removed by owner of the post or tagged person
+	c in (u.(n.walls)).(n.published)
 	
-	n'.published = n.published - (u.(n.walls))->c  
+	//postcondition:
+	// user (who removes tag) can either be the owner of that post or tagged to that post
+	
+	// content is removed from the wall of user and tag is removed from the content
+	u in n.tags[c] implies 
+	n'.published = n.published - (u.(n.walls))->c and
 	n'.tags = n.tags - (c -> u)
+
+	// owner removes tag of a user from content
+	(one n.(own.c) and u in n.tags[c]) implies
+	(n'.published = n.published - (u.(n.walls))->c and
+	n'.tags = n.tags - (c -> u))
 
 	//nothing else changes 
 	n'.users = n.users
-	n'.contents = n.contents
 	n'.friends = n.friends
 	n'.own = n.own
 	n'.walls = n.walls
@@ -278,9 +282,10 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content] {
 }
 assert removeTagPreservesInvariant {
 	all n, n' : Nicebook, u : User, c : Content |
-		invariants[n] and removeTagInvariant[n, n', u, c]
+		invariants[n] and userInScope[n, u]
+		and removeTagInvariant[n, n', u, c]
 		implies invariants[n']
-} //check removeTagPreservesInvariant for 7
+} check removeTagPreservesInvariant for 7
 
 /////////////// PRIVACY ///////////////
 pred setContentPrivacy[n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel] {
@@ -404,6 +409,8 @@ pred invariants [n: Nicebook] {
 	ViewPrivacyInvariant[n]
 	CommentPrivacyInvariant[n]
 	publishInvariant[n]
+	all n' : Nicebook, u1, u2: User, c : Content | addTagInvariant[n, n', u1, u2, c]
+	all n' : Nicebook, u : User, c : Content | removeTagInvariant[n, n', u, c]
 
 	all c: n.contents | contentInvariant[c, n]
 	all w : Wall, c : n.contents | privacyWallContentInvariant[n, w, c]
