@@ -82,7 +82,7 @@ pred publish [n, n' : Nicebook, u : User, c : Content,
     c not in n.users.(n.walls).(n.published)
     
     //if the content c is a new content
-    c not in (n.users).(n.own)
+    c not in n.contents
         implies 
             //we should upload it first
             n'.contents = n.contents  + c and
@@ -464,7 +464,6 @@ fun commentable [n : Nicebook, u : User] : set Content{
     }
 }
 
-
 fun viewable [n : Nicebook, u: User] : set Content{
     // return the content that can be viewed by the user
     { 
@@ -634,6 +633,7 @@ pred contentInvariant [c: Content, n: Nicebook] {
     // an attached comment can only be attached to 1 content
     (c in n.comments[n.contents]) implies (one n.comments.c)
 }
+
 pred wallInvariant[n : Nicebook] {
 
     // every user has a wall
@@ -655,6 +655,7 @@ pred wallInvariant[n : Nicebook] {
     all c: n.published[n.walls[u]] |
     (c in n.own[u]) or (u in n.tags[c])
 }
+
 pred userInvariant[n: Nicebook] {
     // a user cannot be his/her own friend
     all u : n.users | u not in n.friends[u]
@@ -664,6 +665,7 @@ pred userInvariant[n: Nicebook] {
         implies 
     u1 in n.friends[u2]
 }
+
 pred tagInvariant [n: Nicebook] {
     // the tag cannot be attached to comment
     no u: n.users | u in n.tags[Comment]
