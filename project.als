@@ -280,33 +280,35 @@ assert removeTagPreservesInvariant {
 } //check removeTagPreservesInvariant for 7
 
 /////////////// PRIVACY ///////////////
-pred setContentPrivacy[n : Nicebook, u : User, c : Content, p : PrivacyLevel] {
+pred setContentPrivacy[n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel] {
 	// precondition
 	userInScope[n, u] and contentInScope[n, c]
 	// only the content's owner can change its viewPrivacy
 	(u -> c) in n.own
 	// postcondition
 	// TODO: should it be c' ?
-	c.ViewPrivacy = p
+	c'.ViewPrivacy = p
+	n'.own = n.own - u -> c + u -> c'
 }
 assert setContentPrivacyPreservesInvariant {
-	all n, n' : Nicebook, u : User, c : Content, p : PrivacyLevel |
-		invariants[n] and setContentPrivacy[n, u, c, p]
+	all n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel |
+		invariants[n] and setContentPrivacy[n, n', u, c, c', p]
 		implies invariants[n']
 } //check setContentPrivacyPreservesInvariant for 7
 
-pred setCommentPrivacy[n : Nicebook, u : User, c : Content, p : PrivacyLevel] {
+pred setCommentPrivacy[n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel] {
 	// precondition
 	userInScope[n, u] and contentInScope[n, c]
 	// only the content's owner can change its commentPrivacy
 	(u -> c) in n.own
 	// postcondition
 	// TODO: should it be c' ?
-	c.CommentPrivacy = p
+	c'.CommentPrivacy = p
+	n'.own = n.own - u -> c + u -> c'
 }
 assert setCommentPrivacyPreservesInvariant {
-	all n, n' : Nicebook, u : User, c : Content, p : PrivacyLevel |
-		invariants[n] and setCommentPrivacy[n, u, c, p]
+	all n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel |
+		invariants[n] and setCommentPrivacy[n, n', u, c, c', p]
 		implies invariants[n']
 } //check setCommentPrivacyPreservesInvariant for 7
 
