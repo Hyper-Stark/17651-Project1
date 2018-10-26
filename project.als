@@ -78,7 +78,7 @@ pred publish [n, n' : Nicebook, u : User, c : Content,
 assert publishPreserveInv {
 	all n, n': Nicebook, u: User, c: Content,
 		vPrivacy: PrivacyLevel, cPrivacy:  PrivacyLevel |
-			invariants[n] and upload[n, n', u, c, vPrivacy, cPrivacy]
+			invariants[n] and publish[n, n', u, c, vPrivacy, cPrivacy]
 			implies invariants[n']
 } check publishPreserveInv
 
@@ -284,8 +284,7 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content] {
 }
 assert removeTagPreservesInvariant {
 	all n, n' : Nicebook, u : User, c : Content |
-		invariants[n] and userInScope[n, u]
-		and removeTagInvariant[n, n', u, c]
+		invariants[n] and removeTagInvariant[n, n', u, c]
 		implies invariants[n']
 } check removeTagPreservesInvariant for 7
 
@@ -342,7 +341,8 @@ fun viewable [n : Nicebook, u: User] : set Content{
 
 pred publishInvariant[n : Nicebook] {
 	// TODO it's weird that unpublished content but also owned by the user cannot see it
-	all u : n.users | all c : n.contents | c not in n.published[Wall] and u not in n.own.c implies c not in viewable[n, u]
+	all u : n.users | all c : n.contents | (c not in n.published[Wall] 
+	and u not in n.own.c) implies c not in viewable[n, u]
 }
 
 pred privacyWallContentInvariant[n : Nicebook, w : Wall, c : Content] {
@@ -388,7 +388,7 @@ pred wallInvariant[n : Nicebook] {
 	all u1, u2: n.users | (u1 != u2) iff (n.walls[u1] != n.walls[u2])
 	//one n.walls.Wall // this may cause no instance found [TODO]
 	// TODO attached comments should not be shown on owner's wall
-	all c : Comment, u : User| 
+	all c : Comment, u : User | 
 	((u in (n.own).c) and (c not in ((n.own[u]).(n.comments)))) 
 	implies
 	c not in n.published[n.walls[u]]
