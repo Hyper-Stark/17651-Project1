@@ -160,11 +160,13 @@ pred remove [n, n': Nicebook, u: User, c: Content] {
 	n'.published = n.published - (n.walls[u + n.tags[c]] -> c)
 	// remove the attached comments
 	n'.comments = n.comments - (c -> n.comments[c])
-	// TODO photos contained by the note should also be removed
-	//c in Note implies remove[n, n', u, c.contains]
 	// remove tags of the content
 	n'.tags = n.tags - (c -> n.tags[c])
+	// remove attached comments
 	n'.contents = n.contents - c - n.comments[c]
+	// if c belongs to some note, should remove it
+	one content, content': n.contents |
+		(c in content.contains) implies (content'.contains = content.contains - c)
 
 	n'.users = n.users
 	n'.friends = n.friends
@@ -172,6 +174,7 @@ pred remove [n, n': Nicebook, u: User, c: Content] {
 	n'.wallPrivacy = n.wallPrivacy
 }
 assert removePreserveInv {
+	// TODO has counterexample because of publishInvariant
 	all n, n': Nicebook, u: User, c: Content |
 		invariants[n] and remove[n, n', u, c] implies invariants[n']
 } //check removePreserveInv for 10
