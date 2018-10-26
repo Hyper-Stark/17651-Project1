@@ -521,12 +521,13 @@ pred privacyWallContentInvariant[n : Nicebook, w : Wall, c : Content] {
     //than the wall privacy level
     
     //OnlyMe means the note can only be viewed by the owner.
-    n.wallPrivacy[w] = OnlyMe 
+    c in n.published[w] implies
+    (n.wallPrivacy[w] = OnlyMe 
         implies
     (
         c.ViewPrivacy = OnlyMe and 
         c.CommentPrivacy = OnlyMe
-    )
+    ) and
     
     //Friends means the note can be viewed by the owner and his/her friends.
     n.wallPrivacy[w] = Friends 
@@ -534,7 +535,7 @@ pred privacyWallContentInvariant[n : Nicebook, w : Wall, c : Content] {
     (
         c.ViewPrivacy in (Friends + OnlyMe) and
         c.CommentPrivacy in (Friends + OnlyMe)
-    )
+    ) and
     
     //Friends means the note can be viewed by 
     //the owner, his/her friends, and the friends of his/her friends
@@ -543,7 +544,7 @@ pred privacyWallContentInvariant[n : Nicebook, w : Wall, c : Content] {
     (
         c.ViewPrivacy in (FriendsOfFriends + Friends + OnlyMe) and
         c.CommentPrivacy in (FriendsOfFriends + Friends + OnlyMe)
-    )
+    ) and
     
     //Everyone means the note can be viewed by anyone
     n.wallPrivacy[w] = Everyone 
@@ -551,7 +552,7 @@ pred privacyWallContentInvariant[n : Nicebook, w : Wall, c : Content] {
     (
         c.ViewPrivacy = PrivacyLevel and
         c.CommentPrivacy = PrivacyLevel
-    )
+    ) )
 }
 
 pred ViewPrivacyInvariant[n : Nicebook] {
