@@ -219,12 +219,12 @@ assert addCommentPreserveInv {
 /////////////// ADD TAG & REMOVE TAG ///////////////
 // add a tag to a note or photo
 pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content] {
-	//u1 is the user who launched the "addTag" action
-	//u2 is the user who is tagged by u1
-	//both users u1 and u2 are users in nicebook n
+	// u1 is the user who launched the "addTag" action
+	// u2 is the user who is tagged by u1
+	// precondition: 
+	// both users u1 and u2 are users in nicebook n
 	userInScope[n, u1]
 	userInScope[n, u2]
-	// precondition: 
 	// user who tags another user must be that user's friend, i.e., 
 	// u1 should be a friend of u2(tagged user)
 	(u1 in n.friends[u2])
@@ -233,8 +233,8 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content] {
 	// only photo and note can be tagged
 	c not in Comment
 	
-	//postcondition:
-	//content is added to the wall of user and tag is added to the content
+	// postcondition:
+	// content is added to the wall of user and tag is added to the content
 	n'.published = n.published + u2.(n.walls)->c
 	n'.tags = n.tags + (c -> u2)
 
@@ -255,11 +255,12 @@ assert addTagPreservesInvariant {
 // remove a tag on a note or photo
 pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content] {
 	// precondition:
+	// user u is a user in nicebook n
 	userInScope[n, u]
 	// content c must be present in tagged user's wall 
 	c in (u.(n.walls)).(n.published)
 	
-	//postcondition:
+	// postcondition:
 	// user (who removes tag) can either be the owner of that post or tagged to that post
 	
 	// content is removed from the wall of user and tag is removed from the content
@@ -386,6 +387,10 @@ pred wallInvariant[n : Nicebook] {
 	all u1, u2: n.users | (u1 != u2) iff (n.walls[u1] != n.walls[u2])
 	//one n.walls.Wall // this may cause no instance found [TODO]
 	// TODO attached comments should not be shown on owner's wall
+	all c : Comment, u : User| 
+	((u in (n.own).c) and (c not in ((n.own[u]).(n.comments)))) 
+	implies
+	c not in n.published[n.walls[u]]
 	// the content published on someone's wall
 	// should be owned by the user or be tagged
 	all u: n.users | all c: n.published[n.walls[u]] |
