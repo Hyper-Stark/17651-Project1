@@ -83,7 +83,7 @@ pred publish [n, n' : Nicebook, u : User, c : Content,
 assert publishPreserveInv {
 	all n, n': Nicebook, u: User, c: Content,
 		vPrivacy: PrivacyLevel, cPrivacy:  PrivacyLevel |
-			invariants[n] and upload[n, n', u, c, vPrivacy, cPrivacy]
+			invariants[n] and publish[n, n', u, c, vPrivacy, cPrivacy]
 			implies invariants[n']
 } check publishPreserveInv
 
@@ -121,7 +121,7 @@ assert unpublishPreserveInv {
 } check unpublishPreserveInv
 
 /////////////// UPLOAD and REMOVE ///////////////
-// Upload a piece of content, excluding the attacked comments
+// Upload a piece of content, excluding the attached comments
 pred upload [n, n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPrivacy: PrivacyLevel] {
 	// precondition
 	userInScope[n, u] and contentInScope[n, c]
@@ -223,7 +223,7 @@ assert addCommentPreserveInv {
 
 /////////////// ADD TAG & REMOVE TAG ///////////////
 // add a tag to a note or photo
-pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content] {
+pred addTag[n, n' : Nicebook, u1, u2 : User, c : Content] {
 	// u1 is the user who launched the "addTag" action
 	// u2 is the user who is tagged by u1
 	// precondition: 
@@ -232,6 +232,7 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content] {
 	userInScope[n, u2]
 	// user who tags another user must be that user's friend, i.e., 
 	// u1 should be a friend of u2(tagged user)
+	// also that user cannot be tagged by himself as user cannot be his own friend
 	(u1 in n.friends[u2])
 	// the content to be tagged must be published on some wall
 	some (n.published).c
@@ -253,12 +254,12 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content] {
 }
 assert addTagPreservesInvariant {
 	all n, n' : Nicebook, u1,u2 : User, c : Content |
-		invariants[n] and addTagInvariant[n, n', u1, u2, c] implies
+		invariants[n] and addTag[n, n', u1, u2, c] implies
 			invariants[n']
 } check addTagPreservesInvariant for 7
 
 // remove a tag on a note or photo
-pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content] {
+pred removeTag[n, n' : Nicebook, u : User, c : Content] {
 	// precondition:
 	// user u is a user in nicebook n
 	userInScope[n, u]
@@ -288,8 +289,7 @@ pred removeTagInvariant[n, n' : Nicebook, u : User, c : Content] {
 }
 assert removeTagPreservesInvariant {
 	all n, n' : Nicebook, u : User, c : Content |
-		invariants[n] and userInScope[n, u]
-		and removeTagInvariant[n, n', u, c]
+		invariants[n] and removeTag[n, n', u, c]
 		implies invariants[n']
 } check removeTagPreservesInvariant for 7
 
@@ -300,7 +300,6 @@ pred setContentPrivacy[n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyL
 	// only the content's owner can change its viewPrivacy
 	(u -> c) in n.own
 	// postcondition
-	// TODO: should it be c' ?
 	c'.ViewPrivacy = p
 	n'.own = n.own - u -> c + u -> c'
 }
@@ -316,7 +315,6 @@ pred setCommentPrivacy[n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyL
 	// only the content's owner can change its commentPrivacy
 	(u -> c) in n.own
 	// postcondition
-	// TODO: should it be c' ?
 	c'.CommentPrivacy = p
 	n'.own = n.own - u -> c + u -> c'
 }
@@ -346,7 +344,8 @@ fun viewable [n : Nicebook, u: User] : set Content{
 
 pred publishInvariant[n : Nicebook] {
 	// TODO it's weird that unpublished content but also owned by the user cannot see it
-	all u : n.users | all c : n.contents | c not in n.published[Wall] and u not in n.own.c implies c not in viewable[n, u]
+	all u : n.users | all c : n.contents | (c not in n.published[Wall] 
+	and u not in n.own.c) implies c not in viewable[n, u]
 }
 
 pred privacyWallContentInvariant[n : Nicebook, w : Wall, c : Content] {
@@ -369,17 +368,12 @@ pred CommentPrivacyInvariant[n : Nicebook] {
 						     (c.CommentPrivacy = FriendsOfFriends and u not in (n.own.c + n.friends[u] + n.friends[n.friends[u]]) implies c not in commentable[n, u])
 }
 
-assert NoPrivacyViolation {
-	// violation occurs if a user is able to see content not in `viewable`
-	all n : Nicebook | publishInvariant[n] and ViewPrivacyInvariant[n] and CommentPrivacyInvariant[n]
-} check NoPrivacyViolation
-
 /////////////// INVARIANTS ///////////////
 pred contentInvariant [c: Content, n: Nicebook] {
 	// the content belongs to only one user
 	one u: n.users | c in n.own[u]
-	// TODO must prevent circular
-	c not in n.comments[c]
+	// preventing comment circularity
+	c not in c.^(n.comments)
 	// the note and its containing photos have same owner
 	(c in Note and c.contains != none) implies (n.own.c = n.own.(c.contains))
 	// an attached comment can only be attached to 1 content
@@ -392,7 +386,7 @@ pred wallInvariant[n : Nicebook] {
 	all u1, u2: n.users | (u1 != u2) iff (n.walls[u1] != n.walls[u2])
 	//one n.walls.Wall // this may cause no instance found [TODO]
 	// TODO attached comments should not be shown on owner's wall
-	all c : Comment, u : User| 
+	all c : Comment, u : User | 
 	((u in (n.own).c) and (c not in ((n.own[u]).(n.comments)))) 
 	implies
 	c not in n.published[n.walls[u]]
@@ -413,17 +407,33 @@ pred tagInvariant [n: Nicebook] {
 }
 
 pred invariants [n: Nicebook] {
-	tagInvariant[n]
-	wallInvariant[n]
-	userInvariant[n]
+	all n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPrivacy:  PrivacyLevel |
+		publish[n, n', u, c, vPrivacy, cPrivacy]
+	all n': Nicebook, u: User, c: Content |
+		unpublish[n, n', u, c]
+	all n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPrivacy:  PrivacyLevel |
+		upload[n, n', u, c, vPrivacy, cPrivacy]
+	all n': Nicebook, u: User, c: Content |
+		remove[n, n', u, c]
+	all n': Nicebook, u: User, c: Content , comment: Comment| 
+		addComment[n, n', u, comment, c]
+	all n' : Nicebook, u1, u2: User, c : Content | 
+		addTag[n, n', u1, u2, c]
+	all n' : Nicebook, u : User, c : Content | 
+		removeTag[n, n', u, c]
+	all n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel |
+		setContentPrivacy[n, n', u, c, c', p]
+	all n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel |
+		setCommentPrivacy[n, n', u, c, c', p]
+
+	publishInvariant[n]
+	all w : Wall, c : n.contents | privacyWallContentInvariant[n, w, c]
 	ViewPrivacyInvariant[n]
 	CommentPrivacyInvariant[n]
-	publishInvariant[n]
-	all n' : Nicebook, u1, u2: User, c : Content | addTagInvariant[n, n', u1, u2, c]
-	all n' : Nicebook, u : User, c : Content | removeTagInvariant[n, n', u, c]
-
 	all c: n.contents | contentInvariant[c, n]
-	all w : Wall, c : n.contents | privacyWallContentInvariant[n, w, c]
+	wallInvariant[n]
+	userInvariant[n]
+	tagInvariant[n]
 }
 
 run {
