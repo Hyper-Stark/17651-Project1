@@ -116,7 +116,7 @@ assert unpublishPreserveInv {
 } check unpublishPreserveInv
 
 /////////////// UPLOAD and REMOVE ///////////////
-// Upload a piece of content, excluding the attacked comments
+// Upload a piece of content, excluding the attached comments
 pred upload [n, n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPrivacy: PrivacyLevel] {
 	// precondition
 	userInScope[n, u] and contentInScope[n, c]
@@ -227,6 +227,7 @@ pred addTagInvariant [n, n' : Nicebook, u1, u2 : User, c : Content] {
 	userInScope[n, u2]
 	// user who tags another user must be that user's friend, i.e., 
 	// u1 should be a friend of u2(tagged user)
+	// also that user cannot be tagged by himself as user cannot be his own friend
 	(u1 in n.friends[u2])
 	// the content to be tagged must be published on some wall
 	some (n.published).c
