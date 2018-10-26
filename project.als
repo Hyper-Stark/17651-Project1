@@ -283,33 +283,35 @@ assert removeTagPreservesInvariant {
 } //check removeTagPreservesInvariant for 7
 
 /////////////// PRIVACY ///////////////
-pred setContentPrivacy[n : Nicebook, u : User, c : Content, p : PrivacyLevel] {
+pred setContentPrivacy[n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel] {
 	// precondition
 	userInScope[n, u] and contentInScope[n, c]
 	// only the content's owner can change its viewPrivacy
 	(u -> c) in n.own
 	// postcondition
 	// TODO: should it be c' ?
-	c.ViewPrivacy = p
+	c'.ViewPrivacy = p
+	n'.own = n.own - u -> c + u -> c'
 }
 assert setContentPrivacyPreservesInvariant {
-	all n, n' : Nicebook, u : User, c : Content, p : PrivacyLevel |
-		invariants[n] and setContentPrivacy[n, u, c, p]
+	all n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel |
+		invariants[n] and setContentPrivacy[n, n', u, c, c', p]
 		implies invariants[n']
 } //check setContentPrivacyPreservesInvariant for 7
 
-pred setCommentPrivacy[n : Nicebook, u : User, c : Content, p : PrivacyLevel] {
+pred setCommentPrivacy[n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel] {
 	// precondition
 	userInScope[n, u] and contentInScope[n, c]
 	// only the content's owner can change its commentPrivacy
 	(u -> c) in n.own
 	// postcondition
 	// TODO: should it be c' ?
-	c.CommentPrivacy = p
+	c'.CommentPrivacy = p
+	n'.own = n.own - u -> c + u -> c'
 }
 assert setCommentPrivacyPreservesInvariant {
-	all n, n' : Nicebook, u : User, c : Content, p : PrivacyLevel |
-		invariants[n] and setCommentPrivacy[n, u, c, p]
+	all n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel |
+		invariants[n] and setCommentPrivacy[n, n', u, c, c', p]
 		implies invariants[n']
 } //check setCommentPrivacyPreservesInvariant for 7
 
@@ -333,7 +335,7 @@ fun viewable [n : Nicebook, u: User] : set Content{
 
 pred publishInvariant[n : Nicebook] {
 	// TODO it's weird that unpublished content but also owned by the user cannot see it
-	all u : n.users | (n.own[u] - n.published[n.walls[u]]) not in viewable[n, u]
+	all u : n.users | all c : n.contents | c not in n.published[Wall] and u not in n.own.c implies c not in viewable[n, u]
 }
 
 pred privacyWallContentInvariant[n : Nicebook, w : Wall, c : Content] {
@@ -343,15 +345,22 @@ pred privacyWallContentInvariant[n : Nicebook, w : Wall, c : Content] {
 	n.wallPrivacy[w] = FriendsOfFriends implies c.ViewPrivacy in (FriendsOfFriends + Friends + OnlyMe) and c.CommentPrivacy in (FriendsOfFriends + Friends + OnlyMe)
 	n.wallPrivacy[w] = Everyone implies c.ViewPrivacy = PrivacyLevel and c.CommentPrivacy = PrivacyLevel
 }
-pred privacyInvariant[n : Nicebook] {
+
+pred ViewPrivacyInvariant[n : Nicebook] {
 	all c : n.contents | all u : n.users | (c.ViewPrivacy = OnlyMe and u != n.own.c implies c not in viewable[n, u]) and
 						     (c.ViewPrivacy = Friends and u not in (n.own.c + n.friends[u]) implies c not in viewable[n, u]) and
 						     (c.ViewPrivacy = FriendsOfFriends and u not in (n.own.c + n.friends[u] + n.friends[n.friends[u]]) implies c not in viewable[n, u])
 }
 
+pred CommentPrivacyInvariant[n : Nicebook] {
+	all c : n.contents | all u : n.users | (c.CommentPrivacy = OnlyMe and u != n.own.c implies c not in commentable[n, u]) and
+						     (c.CommentPrivacy = Friends and u not in (n.own.c + n.friends[u]) implies c not in commentable[n, u]) and
+						     (c.CommentPrivacy = FriendsOfFriends and u not in (n.own.c + n.friends[u] + n.friends[n.friends[u]]) implies c not in commentable[n, u])
+}
+
 assert NoPrivacyViolation {
 	// violation occurs if a user is able to see content not in `viewable`
-	all n : Nicebook | publishInvariant[n] and privacyInvariant[n]
+	all n : Nicebook | publishInvariant[n] and ViewPrivacyInvariant[n] and CommentPrivacyInvariant[n]
 } //check NoPrivacyViolation
 
 /////////////// INVARIANTS ///////////////
@@ -392,7 +401,8 @@ pred invariants [n: Nicebook] {
 	tagInvariant[n]
 	wallInvariant[n]
 	userInvariant[n]
-	privacyInvariant[n]
+	ViewPrivacyInvariant[n]
+	CommentPrivacyInvariant[n]
 	publishInvariant[n]
 
 	all c: n.contents | contentInvariant[c, n]
