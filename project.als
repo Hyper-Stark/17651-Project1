@@ -13,7 +13,7 @@ sig Photo extends Content {}
 sig Comment extends Content {}
 sig Nicebook {
 
-	users: set User,				// registered users
+	users: set User,					// registered users
 	contents: set Content,			// contents in Nicebook
 
 	friends: users -> users,			// friends of a user
@@ -60,14 +60,19 @@ pred publish [n, n' : Nicebook, u : User, c : Content,
        c not in (n.users).(n.own)
 		implies 
 			//we should upload it first
+			n'.contents = n.contents  + c and
+			//then update the relation between user to content
 			n'.own = n.own + (u -> c) and 
 			//and set its viewPrivacy level
 			c.ViewPrivacy = viewPrivacy and
 			//and set its commentPrivacy level
 			c.CommentPrivacy = commentPrivacy
 		else
+			//otherwise do not update the contents set
+			n'.contents = n.contents
 			//otherwise, c is an existing content, then do nothing
 			n'.own = n.own
+
 
 	n'.published = n.published + 
 			//add the content to user self's wall
