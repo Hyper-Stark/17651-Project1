@@ -318,7 +318,7 @@ pred setContentPrivacy[n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyL
 }
 assert setContentPrivacyPreservesInvariant {
 	all n, n' : Nicebook, p : PrivacyLevel |
-		all u: n.users | all c, c': n.contents | //TODO have to fix it, c' has to be in n'
+		all u: n.users | all c: n.contents | all c': n'.contents |
 		invariants[n] and setContentPrivacy[n, n', u, c, c', p]
 		implies invariants[n']
 } check setContentPrivacyPreservesInvariant for 7
@@ -344,7 +344,7 @@ pred setCommentPrivacy[n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyL
 }
 assert setCommentPrivacyPreservesInvariant {
 	all n, n' : Nicebook, p : PrivacyLevel |
-		all u: n.users | all c, c': n.contents | //TODO have to fix it, c' has to be in n'
+		all u: n.users | all c: n.contents | all c': n'.contents |
 		invariants[n] and setCommentPrivacy[n, n', u, c, c', p]
 		implies invariants[n']
 } check setCommentPrivacyPreservesInvariant for 7
