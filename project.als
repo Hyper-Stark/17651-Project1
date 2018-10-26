@@ -80,7 +80,7 @@ assert publishPreserveInv {
 		vPrivacy: PrivacyLevel, cPrivacy:  PrivacyLevel |
 			invariants[n] and upload[n, n', u, c, vPrivacy, cPrivacy]
 			implies invariants[n']
-} //check publishPreserveInv
+} check publishPreserveInv
 
 // hide a piece of content on a user’s wall
 pred unpublish [n, n' : Nicebook, u : User, c : Content] {
@@ -113,7 +113,7 @@ pred unpublish [n, n' : Nicebook, u : User, c : Content] {
 assert unpublishPreserveInv {
 	all n, n': Nicebook, u: User, c: Content |
 		invariants[n] and unpublish[n, n', u, c] implies invariants[n']
-} //check unpublishPreserveInv
+} check unpublishPreserveInv
 
 /////////////// UPLOAD and REMOVE ///////////////
 // Upload a piece of content, excluding the attacked comments
@@ -144,7 +144,7 @@ assert uploadPreserveInv {
 		vPrivacy: PrivacyLevel, cPrivacy:  PrivacyLevel |
 			invariants[n] and upload[n, n', u, c, vPrivacy, cPrivacy]
 			implies invariants[n']
-} //check uploadPreserveInv
+} check uploadPreserveInv
 
 // Remove an existing piece of content from a user’s account.
 pred remove [n, n': Nicebook, u: User, c: Content] {
@@ -177,7 +177,7 @@ assert removePreserveInv {
 	// TODO has counterexample because of publishInvariant
 	all n, n': Nicebook, u: User, c: Content |
 		invariants[n] and remove[n, n', u, c] implies invariants[n']
-} //check removePreserveInv for 10
+} check removePreserveInv for 10
 
 /////////////// ADD COMMENT ///////////////
 // Add a comment to a content.
@@ -214,7 +214,7 @@ assert addCommentPreserveInv {
 	all n, n': Nicebook, u: User, c: Content , comment: Comment| 
 		invariants[n] and addComment[n, n', u, comment, c]
 		implies invariants[n']
-} //check addCommentPreserveInv for 10
+} check addCommentPreserveInv for 10
 
 /////////////// ADD TAG & REMOVE TAG ///////////////
 // add a tag to a note or photo
@@ -303,7 +303,7 @@ assert setContentPrivacyPreservesInvariant {
 	all n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel |
 		invariants[n] and setContentPrivacy[n, n', u, c, c', p]
 		implies invariants[n']
-} //check setContentPrivacyPreservesInvariant for 7
+} check setContentPrivacyPreservesInvariant for 7
 
 pred setCommentPrivacy[n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel] {
 	// precondition
@@ -319,7 +319,7 @@ assert setCommentPrivacyPreservesInvariant {
 	all n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel |
 		invariants[n] and setCommentPrivacy[n, n', u, c, c', p]
 		implies invariants[n']
-} //check setCommentPrivacyPreservesInvariant for 7
+} check setCommentPrivacyPreservesInvariant for 7
 
 fun commentable [n : Nicebook, u : User] : set Content{
 	// return the contents that the user can comment
@@ -367,7 +367,7 @@ pred CommentPrivacyInvariant[n : Nicebook] {
 assert NoPrivacyViolation {
 	// violation occurs if a user is able to see content not in `viewable`
 	all n : Nicebook | publishInvariant[n] and ViewPrivacyInvariant[n] and CommentPrivacyInvariant[n]
-} //check NoPrivacyViolation
+} check NoPrivacyViolation
 
 /////////////// INVARIANTS ///////////////
 pred contentInvariant [c: Content, n: Nicebook] {
