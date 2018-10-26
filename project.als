@@ -430,25 +430,6 @@ pred tagInvariant [n: Nicebook] {
 }
 
 pred invariants [n: Nicebook] {
-	all n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPrivacy:  PrivacyLevel |
-		publish[n, n', u, c, vPrivacy, cPrivacy]
-	all n': Nicebook, u: User, c: Content |
-		unpublish[n, n', u, c]
-	all n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPrivacy:  PrivacyLevel |
-		upload[n, n', u, c, vPrivacy, cPrivacy]
-	all n': Nicebook, u: User, c: Content |
-		remove[n, n', u, c]
-	all n': Nicebook, u: User, c: Content , comment: Comment| 
-		addComment[n, n', u, comment, c]
-	all n' : Nicebook, u1, u2: User, c : Content | 
-		addTag[n, n', u1, u2, c]
-	all n' : Nicebook, u : User, c : Content | 
-		removeTag[n, n', u, c]
-	all n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel |
-		setContentPrivacy[n, n', u, c, c', p]
-	all n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel |
-		setCommentPrivacy[n, n', u, c, c', p]
-
 	publishInvariant[n]
 	all w : Wall, c : n.contents | privacyWallContentInvariant[n, w, c]
 	ViewPrivacyInvariant[n]
@@ -458,6 +439,16 @@ pred invariants [n: Nicebook] {
 	userInvariant[n]
 	tagInvariant[n]
 }
+
+run publish
+run unpublish
+run upload
+run remove
+run addComment
+run addTag
+run removeTag
+run setContentPrivacy
+run setCommentPrivacy
 
 run {
 	all n: Nicebook | invariants[n]
