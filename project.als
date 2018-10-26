@@ -332,7 +332,7 @@ fun viewable [n : Nicebook, u: User] : set Content{
 
 pred publishInvariant[n : Nicebook] {
 	// TODO it's weird that unpublished content but also owned by the user cannot see it
-	all u : n.users | (n.own[u] - n.published[n.walls[u]]) not in viewable[n, u]
+	all u : n.users | all c : n.contents | c not in n.published[Wall] and u not in n.own.c implies c not in viewable[n, u]
 }
 
 pred privacyWallContentInvariant[n : Nicebook, w : Wall, c : Content] {
@@ -342,15 +342,22 @@ pred privacyWallContentInvariant[n : Nicebook, w : Wall, c : Content] {
 	n.wallPrivacy[w] = FriendsOfFriends implies c.ViewPrivacy in (FriendsOfFriends + Friends + OnlyMe) and c.CommentPrivacy in (FriendsOfFriends + Friends + OnlyMe)
 	n.wallPrivacy[w] = Everyone implies c.ViewPrivacy = PrivacyLevel and c.CommentPrivacy = PrivacyLevel
 }
-pred privacyInvariant[n : Nicebook] {
+
+pred ViewPrivacyInvariant[n : Nicebook] {
 	all c : n.contents | all u : n.users | (c.ViewPrivacy = OnlyMe and u != n.own.c implies c not in viewable[n, u]) and
 						     (c.ViewPrivacy = Friends and u not in (n.own.c + n.friends[u]) implies c not in viewable[n, u]) and
 						     (c.ViewPrivacy = FriendsOfFriends and u not in (n.own.c + n.friends[u] + n.friends[n.friends[u]]) implies c not in viewable[n, u])
 }
 
+pred CommentPrivacyInvariant[n : Nicebook] {
+	all c : n.contents | all u : n.users | (c.CommentPrivacy = OnlyMe and u != n.own.c implies c not in commentable[n, u]) and
+						     (c.CommentPrivacy = Friends and u not in (n.own.c + n.friends[u]) implies c not in commentable[n, u]) and
+						     (c.CommentPrivacy = FriendsOfFriends and u not in (n.own.c + n.friends[u] + n.friends[n.friends[u]]) implies c not in commentable[n, u])
+}
+
 assert NoPrivacyViolation {
 	// violation occurs if a user is able to see content not in `viewable`
-	all n : Nicebook | publishInvariant[n] and privacyInvariant[n]
+	all n : Nicebook | publishInvariant[n] and ViewPrivacyInvariant[n] and CommentPrivacyInvariant[n]
 } //check NoPrivacyViolation
 
 /////////////// INVARIANTS ///////////////
@@ -391,7 +398,8 @@ pred invariants [n: Nicebook] {
 	tagInvariant[n]
 	wallInvariant[n]
 	userInvariant[n]
-	privacyInvariant[n]
+	ViewPrivacyInvariant[n]
+	CommentPrivacyInvariant[n]
 	publishInvariant[n]
 
 	all c: n.contents | contentInvariant[c, n]
