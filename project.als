@@ -81,8 +81,8 @@ pred publish [n, n' : Nicebook, u : User, c : Content,
 			(n.walls[n.tags[c]] -> c)
 }
 assert publishPreserveInv {
-	all n, n': Nicebook, u: User, c: Content,
-		vPrivacy: PrivacyLevel, cPrivacy:  PrivacyLevel |
+	all n, n': Nicebook, vPrivacy: PrivacyLevel, cPrivacy:  PrivacyLevel |
+		all u: n.users | all c: n.contents |
 			invariants[n] and publish[n, n', u, c, vPrivacy, cPrivacy]
 			implies invariants[n']
 } check publishPreserveInv
@@ -116,7 +116,7 @@ pred unpublish [n, n' : Nicebook, u : User, c : Content] {
 				(n.walls[n.tags[c]] -> c)
 }
 assert unpublishPreserveInv {
-	all n, n': Nicebook, u: User, c: Content |
+	all n, n': Nicebook | all u: n.users | all c: n.contents |
 		invariants[n] and unpublish[n, n', u, c] implies invariants[n']
 } check unpublishPreserveInv
 
@@ -145,8 +145,8 @@ pred upload [n, n': Nicebook, u: User, c: Content, vPrivacy: PrivacyLevel, cPriv
 	n'.tags = n.tags
 }
 assert uploadPreserveInv {
-	all n, n': Nicebook, u: User, c: Content,
-		vPrivacy: PrivacyLevel, cPrivacy:  PrivacyLevel |
+	all n, n': Nicebook, vPrivacy: PrivacyLevel, cPrivacy:  PrivacyLevel |
+		 all u: n.users | all c: n.contents |
 			invariants[n] and upload[n, n', u, c, vPrivacy, cPrivacy]
 			implies invariants[n']
 } check uploadPreserveInv
@@ -180,7 +180,7 @@ pred remove [n, n': Nicebook, u: User, c: Content] {
 }
 assert removePreserveInv {
 	// TODO has counterexample because of publishInvariant
-	all n, n': Nicebook, u: User, c: Content |
+	all n, n': Nicebook | all u: n.users | all c: n.contents |
 		invariants[n] and remove[n, n', u, c] implies invariants[n']
 } check removePreserveInv for 10
 
@@ -216,8 +216,10 @@ pred addComment [n, n': Nicebook, u: User, comment: Comment, content: Content] {
 	n'.tags = n.tags
 }
 assert addCommentPreserveInv {
-	all n, n': Nicebook, u: User, c: Content , comment: Comment| 
-		invariants[n] and addComment[n, n', u, comment, c]
+	all n, n': Nicebook | all u: n.users | all c: n.contents |
+		all comment: n.contents |
+		invariants[n] and (comment in Comment) and
+		addComment[n, n', u, comment, c]
 		implies invariants[n']
 } check addCommentPreserveInv for 10
 
@@ -230,6 +232,7 @@ pred addTag[n, n' : Nicebook, u1, u2 : User, c : Content] {
 	// both users u1 and u2 are users in nicebook n
 	userInScope[n, u1]
 	userInScope[n, u2]
+	contentInScope[n, c]
 	// user who tags another user must be that user's friend, i.e., 
 	// u1 should be a friend of u2(tagged user)
 	// also that user cannot be tagged by himself as user cannot be his own friend
@@ -253,7 +256,7 @@ pred addTag[n, n' : Nicebook, u1, u2 : User, c : Content] {
 	n'.wallPrivacy = n.wallPrivacy
 }
 assert addTagPreservesInvariant {
-	all n, n' : Nicebook, u1,u2 : User, c : Content |
+	all n, n' : Nicebook | all u1, u2: n.users | all c: n.contents |
 		invariants[n] and addTag[n, n', u1, u2, c] implies
 			invariants[n']
 } check addTagPreservesInvariant for 7
@@ -263,6 +266,7 @@ pred removeTag[n, n' : Nicebook, u : User, c : Content] {
 	// precondition:
 	// user u is a user in nicebook n
 	userInScope[n, u]
+	contentInScope[n, c]
 	// content c must be present in tagged user's wall 
 	c in (u.(n.walls)).(n.published)
 	
@@ -288,7 +292,7 @@ pred removeTag[n, n' : Nicebook, u : User, c : Content] {
 	n'.wallPrivacy = n.wallPrivacy
 }
 assert removeTagPreservesInvariant {
-	all n, n' : Nicebook, u : User, c : Content |
+	all n, n' : Nicebook | all u: n.users | all c: n.contents |
 		invariants[n] and removeTag[n, n', u, c]
 		implies invariants[n']
 } check removeTagPreservesInvariant for 7
@@ -302,9 +306,20 @@ pred setContentPrivacy[n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyL
 	// postcondition
 	c'.ViewPrivacy = p
 	n'.own = n.own - u -> c + u -> c'
+
+	n'.users = n.users
+	n'.contents = n.contents
+	n'.friends = n.friends
+	n'.walls = n.walls
+	n'.own = n.own
+	n'.published = n.published
+	n'.wallPrivacy = n.wallPrivacy
+	n'.comments = n.comments
+	n'.tags = n.tags
 }
 assert setContentPrivacyPreservesInvariant {
-	all n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel |
+	all n, n' : Nicebook, p : PrivacyLevel |
+		all u: n.users | all c, c': n.contents | //TODO have to fix it, c' has to be in n'
 		invariants[n] and setContentPrivacy[n, n', u, c, c', p]
 		implies invariants[n']
 } check setContentPrivacyPreservesInvariant for 7
@@ -317,9 +332,20 @@ pred setCommentPrivacy[n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyL
 	// postcondition
 	c'.CommentPrivacy = p
 	n'.own = n.own - u -> c + u -> c'
+
+	n'.users = n.users
+	n'.contents = n.contents
+	n'.friends = n.friends
+	n'.walls = n.walls
+	n'.own = n.own
+	n'.published = n.published
+	n'.wallPrivacy = n.wallPrivacy
+	n'.comments = n.comments
+	n'.tags = n.tags
 }
 assert setCommentPrivacyPreservesInvariant {
-	all n, n' : Nicebook, u : User, c, c' : Content, p : PrivacyLevel |
+	all n, n' : Nicebook, p : PrivacyLevel |
+		all u: n.users | all c, c': n.contents | //TODO have to fix it, c' has to be in n'
 		invariants[n] and setCommentPrivacy[n, n', u, c, c', p]
 		implies invariants[n']
 } check setCommentPrivacyPreservesInvariant for 7
